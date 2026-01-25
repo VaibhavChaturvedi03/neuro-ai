@@ -30,11 +30,11 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <div className="dark:bg-gray-900">
       <div className="lg:grid-cols-2 grid grid-cols-1">
         <div className="flex flex-col lg:pl-20 justify-center">
           <div>
-            <div className="lg:text-6xl md:text-4xl sm:text-3xl text-2xl lg:text-left text-center flex flex-col gap-4 font-spacegrotesksemibold">
+            <div className="lg:text-6xl md:text-4xl sm:text-3xl text-2xl lg:text-left text-center flex flex-col gap-4 font-spacegrotesksemibold dark:text-white">
               <div>
                 Speak.<span className="text-[#2D8CFF]"> Learn</span>. Thrive
               </div>
@@ -44,7 +44,7 @@ export default function Home() {
             <div className="lg:hidden flex justify-center mt-10">
               <img src={Mic} />
             </div>
-            <div className="lg:text-xl md:text-xl text-lg font-spacegroteskregular my-10 text-center lg:text-start p-1 lg:p-0">
+            <div className="lg:text-xl md:text-xl text-lg font-spacegroteskregular my-10 text-center lg:text-start p-1 lg:p-0 dark:text-gray-300">
               Our goal is to empower individuals with speech challenges. Unlock
               your potential through personalized speech training.
             </div>
@@ -57,7 +57,7 @@ export default function Home() {
               </button>
             </div>
             <div className="flex justify-center">
-              <button onClick={scrollToSection} className="border flex font-spacegroteskmedium items-center justify-center rounded-md px-7 py-4 border-black hover:bg-black hover:text-white">
+              <button onClick={scrollToSection} className="border flex font-spacegroteskmedium items-center justify-center rounded-md px-7 py-4 border-black hover:bg-black hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-black">
                 <p>Browse Features</p>
               </button>
             </div>
@@ -71,7 +71,7 @@ export default function Home() {
 
       <div ref={mySectionRef}>
         <div className="flex items-center justify-center lg:block">
-          <div className="border-y-4 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center">
+          <div className="border-y-4 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black dark:border-white font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center dark:text-white">
             Features
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 shadow-2xl lg:h-64 lg:w-96 md:h-64 md:w-96 max-w-96">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-2xl lg:h-64 lg:w-96 md:h-64 md:w-96 max-w-96">
               <div className="flex items-center justify-center lg:items-start lg:justify-start md:items-start md:justify-start">
                 <img
                   src={Progress}
@@ -101,10 +101,10 @@ export default function Home() {
                   className="mb-4 lg:h-20 md:h-20 h-14"
                 />
               </div>
-              <div className="font-spacegrotesksemibold mb-2 lg:text-2xl md:text-2xl text-lg text-center lg:text-start md:text-start">
+              <div className="font-spacegrotesksemibold mb-2 lg:text-2xl md:text-2xl text-lg text-center lg:text-start md:text-start dark:text-white">
                 Progress Tracking
               </div>
-              <div className="font-spacegrotesklight text-center lg:text-start md:text-start">
+              <div className="font-spacegrotesklight text-center lg:text-start md:text-start dark:text-gray-300">
                 Track success, analyze and celebrate milestone.
               </div>
             </div>
@@ -122,14 +122,14 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 shadow-2xl lg:h-64 lg:w-96 md:h-64 md:w-96 max-w-96">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-2xl lg:h-64 lg:w-96 md:h-64 md:w-96 max-w-96">
               <div className="flex items-center justify-center lg:items-start lg:justify-start md:items-start md:justify-start">
                 <img src={Motor} alt="" className="mb-4 lg:h-20 md:h-20 h-14" />
               </div>
-              <div className="font-spacegrotesksemibold mb-2 lg:text-2xl md:text-2xl text-lg text-center lg:text-start md:text-start">
+              <div className="font-spacegrotesksemibold mb-2 lg:text-2xl md:text-2xl text-lg text-center lg:text-start md:text-start dark:text-white">
                 Motor-Based Intervention
               </div>
-              <div className=" font-spacegrotesklight text-center lg:text-start md:text-start">
+              <div className=" font-spacegrotesklight text-center lg:text-start md:text-start dark:text-gray-300">
                 Incorporates both perceptual and production training.
               </div>
             </div>
@@ -147,7 +147,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 shadow-2xl lg:h-64 lg:w-96 md:h-64 md:w-96 max-w-96">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-2xl lg:h-64 lg:w-96 md:h-64 md:w-96 max-w-96">
               <div className="flex items-center justify-center lg:items-start lg:justify-start md:items-start md:justify-start">
                 <img
                   src={Learning}
@@ -155,10 +155,10 @@ export default function Home() {
                   className="mb-4 lg:h-20 md:h-20 h-14"
                 />
               </div>
-              <div className="font-spacegrotesksemibold mb-2 lg:text-2xl md:text-2xl text-lg text-center lg:text-start md:text-start">
+              <div className="font-spacegrotesksemibold mb-2 lg:text-2xl md:text-2xl text-lg text-center lg:text-start md:text-start dark:text-white">
                 Multimodal Learning
               </div>
-              <div className="font-spacegrotesklight text-center lg:text-start md:text-start">
+              <div className="font-spacegrotesklight text-center lg:text-start md:text-start dark:text-gray-300">
                 Multimodal approach with visual & cues and 3-Dimensional
                 animations for effective learning.
               </div>
@@ -169,7 +169,7 @@ export default function Home() {
 
       <div>
         <div className="flex items-center justify-center lg:block">
-          <div className="border-y-4 p-1 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center">
+          <div className="border-y-4 p-1 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black dark:border-white font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center dark:text-white">
             Strengths
           </div>
         </div>
@@ -184,10 +184,10 @@ export default function Home() {
                   className="h-[200px] md:h-[300px] sm:h-[300px]"
                 />
               </div>
-              <div className="lg:text-4xl md:text-3xl text-xl p-1 lg:p-0 lg:text-start text-center font-spacegrotesksemibold">
+              <div className="lg:text-4xl md:text-3xl text-xl p-1 lg:p-0 lg:text-start text-center font-spacegrotesksemibold dark:text-white">
                 Real-Time Speech Detection and Weekly Test Analysis
               </div>
-              <div className="font-spacegroteskregular lg:text-xl md:text-xl text-sm lg:text-start text-center p-4 lg:p-0">
+              <div className="font-spacegroteskregular lg:text-xl md:text-xl text-sm lg:text-start text-center p-4 lg:p-0 dark:text-gray-300">
                 Unlock the potential of your voice through cutting-edge
                 technology. Our platform not only hears your words but guides
                 you towards eloquence with precision.
@@ -207,10 +207,10 @@ export default function Home() {
               />
             </div>
             <div className="lg:ml-20 ml-0 flex flex-col gap-8 items-center justify-center lg:mt-0 md:mt-0 mt-10">
-              <div className="lg:text-4xl md:text-3xl text-xl p-1 lg:p-0 lg:text-start text-center font-spacegrotesksemibold">
+              <div className="lg:text-4xl md:text-3xl text-xl p-1 lg:p-0 lg:text-start text-center font-spacegrotesksemibold dark:text-white">
                 Real-Time Speech Detection and Weekly Test Analysis
               </div>
-              <div className="font-spacegroteskregular lg:text-xl md:text-xl text-sm lg:text-start text-center p-4 lg:p-0">
+              <div className="font-spacegroteskregular lg:text-xl md:text-xl text-sm lg:text-start text-center p-4 lg:p-0 dark:text-gray-300">
                 Unlock the potential of your voice through cutting-edge
                 technology. Our platform not only hears your words but guides
                 you towards eloquence with precision.
@@ -221,13 +221,13 @@ export default function Home() {
       </div>
 
       <div>
-        <div className="bg-[#F3F3F3] lg:my-32 md:my-32 my-10 mx-4 md:mx-32 rounded-3xl">
+        <div className="bg-[#F3F3F3] dark:bg-gray-800 lg:my-32 md:my-32 my-10 mx-4 md:mx-32 rounded-3xl">
           <div className="grid lg:grid-cols-2">
             <div className="text-center p-10 flex flex-col lg:items-start items-center justify-center gap-6">
-              <div className="lg:text-4xl md:text-3xl text-2xl font-spacegroteskmedium">
+              <div className="lg:text-4xl md:text-3xl text-2xl font-spacegroteskmedium dark:text-white">
                 Let's Make things happen!
               </div>
-              <div className="font-spacegroteskregular lg:text-lg md:text-lg text-sm lg:text-start text-center">
+              <div className="font-spacegroteskregular lg:text-lg md:text-lg text-sm lg:text-start text-center dark:text-gray-300">
                 To get started and gain some insights and knowledge about speech
                 disorders, how to cure them and related stuff go to the articles
                 section.
@@ -251,7 +251,7 @@ export default function Home() {
 
       <div>
         <div className="flex items-center justify-center lg:block">
-          <div className="border-y-4 p-1 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center">
+          <div className="border-y-4 p-1 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black dark:border-white font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center dark:text-white">
             Contact Us
           </div>
         </div>
@@ -265,21 +265,21 @@ export default function Home() {
             <div>
               <div className="lg:p-8 md:p-8 p-2">
                 <div className="flex items-center justify-center">
-                  <div className="font-spacegroteskmedium lg:text-4xl md:text-3xl hidden lg:block">
+                  <div className="font-spacegroteskmedium lg:text-4xl md:text-3xl hidden lg:block dark:text-white">
                     Connect With Us
                   </div>
                 </div>
                 <div>
                   <div className="flex flex-col lg:flex-row md:flex-row lg:justify-between md:justify-between">
                     <input
-                      className="px-4 py-3 lg:w-full md:w-full outline-none font-spacegrotesksemibold m-3 rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040]"
+                      className="px-4 py-3 lg:w-full md:w-full outline-none font-spacegrotesksemibold m-3 rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040] dark:bg-gray-800 dark:text-white dark:border-gray-600"
                       name="text"
                       placeholder="First Name"
                       type="text"
                     />
 
                     <input
-                      className="px-4 py-3 lg:w-full md:w-full outline-none m-3 font-spacegrotesksemibold rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040]"
+                      className="px-4 py-3 lg:w-full md:w-full outline-none m-3 font-spacegrotesksemibold rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040] dark:bg-gray-800 dark:text-white dark:border-gray-600"
                       name="text"
                       placeholder="Last Name"
                       type="text"
@@ -287,20 +287,20 @@ export default function Home() {
                   </div>
                   <div className="flex flex-col">
                     <input
-                      className="px-4 py-3 outline-none m-3 font-spacegrotesksemibold rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040]"
+                      className="px-4 py-3 outline-none m-3 font-spacegrotesksemibold rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040] dark:bg-gray-800 dark:text-white dark:border-gray-600"
                       name="text"
                       placeholder="Email"
                       type="text"
                     />
                     <input
-                      className="px-4 py-3 outline-none m-3 font-spacegrotesksemibold rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040]"
+                      className="px-4 py-3 outline-none m-3 font-spacegrotesksemibold rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040] dark:bg-gray-800 dark:text-white dark:border-gray-600"
                       name="text"
                       placeholder="Phone Number"
                       type="text"
                     />
 
                     <input
-                      className="px-4 py-3 outline-none m-3  font-spacegrotesksemibold rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040]"
+                      className="px-4 py-3 outline-none m-3  font-spacegrotesksemibold rounded-lg border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040] dark:bg-gray-800 dark:text-white dark:border-gray-600"
                       name="text"
                       placeholder="Message"
                       type="text"

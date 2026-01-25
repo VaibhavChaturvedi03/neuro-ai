@@ -26,3 +26,12 @@
     font-family: "Space Grotesk Semibold";
     src: url("./assets/fonts/SpaceGrotesk-SemiBold.ttf");
 }
+
+/* Dark mode base styles */
+body {
+  @apply bg-white dark:bg-gray-900 text-black dark:text-white transition-colors;
+}
+
+#root {
+  @apply min-h-screen bg-white dark:bg-gray-900;
+}

@@ -1,6 +1,5 @@
 Flask==3.0.0
 flask-cors==4.0.0
 python-dotenv==1.0.0
-groq==0.4.2
-pyaudio==0.2.14
-wave
+groq==0.11.0
+PyAudio==0.2.14

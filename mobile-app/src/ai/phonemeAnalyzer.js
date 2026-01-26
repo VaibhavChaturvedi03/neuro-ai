@@ -4,11 +4,21 @@ class PhonemeAnalyzerService {
   constructor() {
     this.llm = null;
     this.initialized = false;
+    this.initializing = false;
   }
 
   async initialize() {
     if (this.initialized) return;
 
+    if (this.initializing) {
+      // Wait until another caller finishes init
+      while (!this.initialized) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return;
+    }
+
+    this.initializing = true;
     try {
       // Use smallest model for real-time analysis
       this.llm = new LlamaCpp({
@@ -21,8 +31,10 @@ class PhonemeAnalyzerService {
       console.log('Phoneme analyzer initialized');
     } catch (error) {
       console.error('Failed to initialize phoneme analyzer:', error);
+      this.initializing = false;
       throw error;
     }
+    this.initializing = false;
   }
 
   // Simple phoneme comparison without LLM (faster, no model needed)
@@ -45,9 +57,10 @@ class PhonemeAnalyzerService {
 
   // Advanced phoneme analysis using LLM
   async analyzePhonemes(transcription, expectedWord, targetPhonemes) {
-    await this.initialize();
+    try {
+      await this.initialize();
 
-    const prompt = `You are a speech therapist analyzing a child's pronunciation.
+      const prompt = `You are a speech therapist analyzing a child's pronunciation.
 
 Expected word: "${expectedWord}"
 What they said: "${transcription}"
@@ -60,7 +73,6 @@ Provide:
 
 Keep response under 50 words, child-friendly.`;
 
-    try {
       const response = await this.llm.generate(prompt);
 
       // Parse response

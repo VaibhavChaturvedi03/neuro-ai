@@ -2,11 +2,27 @@ import { ModelManager } from '@runanywhere/core';
 
 class AppModelManager {
   constructor() {
-    this.manager = new ModelManager();
+    this.manager = null;
     this.modelsReady = false;
+this.initializing = false;
+  }
+  async ensureInitialized() {
+    if (this.manager) return;
+
+    if (this.initializing) {
+      // wait until another caller finishes init
+      while (!this.manager) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return;
+    }
+    this.initializing = true;
+    this.manager = new ModelManager();
+    this.initializing = false;
   }
 
   async initializeModels(onProgress) {
+    await this.ensureInitialized();
     if (this.modelsReady) return;
 
     try {
@@ -45,6 +61,7 @@ class AppModelManager {
 
   async checkModelsStatus() {
     // Check if models are already cached
+    await this.ensureInitialized()
     const cached = await this.manager.listCached();
     return {
       whisper: cached.includes('whisper-tiny-en'),
@@ -54,6 +71,7 @@ class AppModelManager {
   }
 
   async clearCache() {
+    await this.ensureInitialized();
     await this.manager.clearCache();
     this.modelsReady = false;
   }

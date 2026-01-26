@@ -6,11 +6,21 @@ class SpeechRecognitionService {
     this.stt = null;
     this.recording = null;
     this.initialized = false;
+    this.initializing = false;
   }
 
   async initialize() {
     if (this.initialized) return;
 
+    if (this.initializing) {
+      // Wait until another caller finishes init
+      while (!this.initialized) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return;
+    }
+
+    this.initializing = true;
     try {
       // Request microphone permissions
       const { status } = await Audio.requestPermissionsAsync();
@@ -34,8 +44,10 @@ class SpeechRecognitionService {
       console.log('Speech recognition initialized');
     } catch (error) {
       console.error('Failed to initialize speech recognition:', error);
+      this.initializing = false;
       throw error;
     }
+    this.initializing = false;
   }
 
   async startRecording() {
@@ -86,16 +98,25 @@ class SpeechRecognitionService {
   }
 
   async loadAudioFile(uri) {
-    // Load audio file as ArrayBuffer
-    const response = await fetch(uri);
-    const arrayBuffer = await response.arrayBuffer();
-    return new Uint8Array(arrayBuffer);
+    try {
+      // Load audio file as ArrayBuffer
+      const response = await fetch(uri);
+      const arrayBuffer = await response.arrayBuffer();
+      return new Uint8Array(arrayBuffer);
+    } catch (error) {
+      console.error('Failed to load audio file:', error);
+      throw error;
+    }
   }
 
   cleanup() {
     if (this.recording) {
-      this.recording.stopAndUnloadAsync();
-      this.recording = null;
+      try {
+        this.recording.stopAndUnloadAsync();
+        this.recording = null;
+      } catch (error) {
+        console.error('Error cleaning up recording:', error);
+      }
     }
   }
 }

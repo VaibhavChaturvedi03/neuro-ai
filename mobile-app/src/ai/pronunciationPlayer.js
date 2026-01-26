@@ -1,17 +1,27 @@
 import { TextToSpeech } from '@runanywhere/onnx';
 import { Audio } from 'expo-av';
-import Speech from "expo-speech";
+import Speech from 'expo-speech';
 
 class PronunciationPlayerService {
   constructor() {
     this.tts = null;
     this.initialized = false;
+    this.initializing = false;
     this.currentSound = null;
   }
 
   async initialize() {
     if (this.initialized) return;
 
+    if (this.initializing) {
+      // Wait until another caller finishes init
+      while (!this.initialized) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return;
+    }
+
+    this.initializing = true;
     try {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -27,14 +37,16 @@ class PronunciationPlayerService {
       console.log('TTS initialized');
     } catch (error) {
       console.error('Failed to initialize TTS:', error);
+      this.initializing = false;
       throw error;
     }
+    this.initializing = false;
   }
 
   async playWord(word) {
-    await this.initialize();
-
     try {
+      await this.initialize();
+
       // Stop any currently playing sound
       if (this.currentSound) {
         await this.currentSound.stopAsync();
@@ -68,13 +80,18 @@ class PronunciationPlayerService {
     }
   }
 
-  async playWithDeviceTTS(word) {
+  playWithDeviceTTS(word) {
     // Fallback to Expo Speech API
-    Speech.speak(word, {
-      language: 'en-US',
-      pitch: 1.0,
-      rate: 0.75,
-    });
+    try {
+      Speech.speak(word, {
+        language: 'en-US',
+        pitch: 1.0,
+        rate: 0.75,
+      });
+      console.log('Playing with fallback TTS:', word);
+    } catch (error) {
+      console.error('Fallback TTS also failed:', error);
+    }
   }
 
   arrayBufferToBase64(buffer) {
@@ -89,9 +106,13 @@ class PronunciationPlayerService {
 
   async cleanup() {
     if (this.currentSound) {
-      await this.currentSound.stopAsync();
-      await this.currentSound.unloadAsync();
-      this.currentSound = null;
+      try {
+        await this.currentSound.stopAsync();
+        await this.currentSound.unloadAsync();
+        this.currentSound = null;
+      } catch (error) {
+        console.error('Error cleaning up sound:', error);
+      }
     }
   }
 }

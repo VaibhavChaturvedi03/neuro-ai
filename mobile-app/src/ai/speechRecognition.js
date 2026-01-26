@@ -1,5 +1,6 @@
 import { SpeechToText } from '@runanywhere/onnx';
 import { Audio } from 'expo-av';
+import runtimeManager from './runtime';
 
 class SpeechRecognitionService {
   constructor() {
@@ -13,7 +14,6 @@ class SpeechRecognitionService {
     if (this.initialized) return;
 
     if (this.initializing) {
-      // Wait until another caller finishes init
       while (!this.initialized) {
         await new Promise(r => setTimeout(r, 50));
       }
@@ -22,21 +22,21 @@ class SpeechRecognitionService {
 
     this.initializing = true;
     try {
-      // Request microphone permissions
+      // Initialize Runtime FIRST
+      await runtimeManager.initialize();
+
       const { status } = await Audio.requestPermissionsAsync();
       if (status !== 'granted') {
         throw new Error('Microphone permission not granted');
       }
 
-      // Configure audio mode
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
-      // Initialize Whisper model (smallest for mobile)
       this.stt = new SpeechToText({
-        model: 'whisper-tiny-en', // ~75MB, fastest
+        model: 'whisper-tiny-en',
         language: 'en',
       });
 
@@ -50,6 +50,7 @@ class SpeechRecognitionService {
     this.initializing = false;
   }
 
+  // ... rest of the methods stay the same
   async startRecording() {
     await this.initialize();
 
@@ -80,10 +81,7 @@ class SpeechRecognitionService {
 
       console.log('Recording stopped, transcribing...');
 
-      // Convert audio file to format Whisper expects
       const audioBuffer = await this.loadAudioFile(uri);
-
-      // Transcribe using Whisper
       const transcription = await this.stt.transcribe(audioBuffer);
 
       console.log('Transcription:', transcription.text);
@@ -99,7 +97,6 @@ class SpeechRecognitionService {
 
   async loadAudioFile(uri) {
     try {
-      // Load audio file as ArrayBuffer
       const response = await fetch(uri);
       const arrayBuffer = await response.arrayBuffer();
       return new Uint8Array(arrayBuffer);

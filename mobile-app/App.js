@@ -23,11 +23,16 @@ export default function App() {
 
     const initializeApp = async () => {
         try {
+            // Always initialize runtime first
+            await modelManager.checkModelsStatus();
+
             // Check if models are already downloaded
             const status = await modelManager.checkModelsStatus();
 
-            if (status.whisper && status.llm && status.tts) {
-                // Models already cached
+            if (status.whisper && status.llm) {
+                // Models cached, but still need to load into memory
+                console.log('Models cached, loading into memory...');
+                await modelManager.ensureModelsLoaded();
                 setModelsReady(true);
                 return;
             }

@@ -150,6 +150,34 @@ class AppModelManager {
         }
     }
 
+    async ensureModelsLoaded() {
+        try {
+            await runtimeManager.initialize();
+            await this.addModels();
+
+            console.log('Loading cached models into memory...');
+
+            const whisperInfo = await RunAnywhere.getModelInfo("whisper-tiny-en");
+            const llmInfo = await RunAnywhere.getModelInfo("smollm-135m-instruct");
+
+            if (whisperInfo?.localPath) {
+                await RunAnywhere.loadSTTModel(whisperInfo.localPath, "whisper");
+                console.log('Whisper model loaded');
+            }
+
+            if (llmInfo?.localPath) {
+                await RunAnywhere.loadModel(llmInfo.localPath);
+                console.log('LLM model loaded');
+            }
+
+            this.modelsReady = true;
+            console.log('All cached models loaded successfully');
+        } catch (error) {
+            console.error('Failed to load cached models:', error);
+            throw error;
+        }
+    }
+
     async clearCache() {
         // RunAnywhere doesn't expose clearCache in the docs
         // Models are managed through getModelInfo/downloadModel

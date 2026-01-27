@@ -57,6 +57,11 @@ class SpeechRecognitionService {
 
             console.log("Recording stopped, transcribing...");
 
+            // Verify RunAnywhere is ready
+            if (!runtimeManager.isReady() || typeof RunAnywhere.transcribeFile !== 'function') {
+                throw new Error("RunAnywhere SDK not ready - transcribeFile not available");
+            }
+
             // Use RunAnywhere.transcribeFile() directly
             const result = await RunAnywhere.transcribeFile(uri, {
                 language: "en",

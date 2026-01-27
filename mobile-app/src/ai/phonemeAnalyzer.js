@@ -32,6 +32,18 @@ class PhonemeAnalyzerService {
         try {
             await this.initialize();
 
+            // Verify RunAnywhere is ready
+            if (!runtimeManager.isReady() || typeof RunAnywhere.generate !== 'function') {
+                console.warn('RunAnywhere not ready, using fallback analysis');
+                return {
+                    accuracy: this.calculateSimpleAccuracy(transcription, expectedWord),
+                    transcription,
+                    expectedWord,
+                    feedback: this.generateSimpleFeedback(transcription, expectedWord),
+                    timestamp: new Date().toISOString(),
+                };
+            }
+
             const prompt = `You are a speech therapist analyzing a child's pronunciation.
 
 Expected word: "${expectedWord}"

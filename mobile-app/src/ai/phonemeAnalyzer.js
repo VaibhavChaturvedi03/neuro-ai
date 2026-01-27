@@ -1,49 +1,16 @@
-import { LlamaCPP } from "@runanywhere/llamacpp";
+import { RunAnywhere } from "@runanywhere/core";
 import runtimeManager from "./runtime";
 
 class PhonemeAnalyzerService {
     constructor() {
-        this.llm = null;
         this.initialized = false;
-        this.initializing = false;
     }
 
     async initialize() {
         if (this.initialized) return;
 
-        if (this.initializing) {
-            while (!this.initialized) {
-                await new Promise((r) => setTimeout(r, 50));
-            }
-            return;
-        }
-
-        this.initializing = true;
-        try {
-            await runtimeManager.initialize();
-
-            console.log("Creating LlamaCPP instance...");
-
-            // Additional safety check - ensure LlamaCPP is defined
-            if (!LlamaCPP || !LlamaCPP.create) {
-                throw new Error("LlamaCPP module not ready yet");
-            }
-
-            // Use LlamaCPP.create() factory method
-            this.llm = await LlamaCPP.create({
-                model: "smollm-135m-instruct",
-                temperature: 0.3,
-                maxTokens: 150,
-            });
-
-            this.initialized = true;
-            console.log("Phoneme analyzer initialized");
-        } catch (error) {
-            console.error("Failed to initialize phoneme analyzer:", error);
-            this.initializing = false;
-            throw error;
-        }
-        this.initializing = false;
+        await runtimeManager.initialize();
+        this.initialized = true;
     }
 
     calculateSimpleAccuracy(transcription, expectedWord) {
@@ -78,8 +45,13 @@ Provide:
 
 Keep response under 50 words, child-friendly.`;
 
-            const response = await this.llm.generate(prompt);
+            // Use RunAnywhere.generate() directly
+            const result = await RunAnywhere.generate(prompt, {
+                maxTokens: 150,
+                temperature: 0.3,
+            });
 
+            const response = result.text;
             const accuracyMatch = response.match(/(\d+)%/);
             const accuracy = accuracyMatch
                 ? parseInt(accuracyMatch[1])

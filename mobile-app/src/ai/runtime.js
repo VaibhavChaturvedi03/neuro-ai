@@ -1,4 +1,6 @@
 import { RunAnywhere, SDKEnvironment } from "@runanywhere/core";
+import { LlamaCPP } from "@runanywhere/llamacpp";
+import { ONNX } from "@runanywhere/onnx";
 
 class RuntimeManager {
     constructor() {
@@ -20,12 +22,17 @@ class RuntimeManager {
         try {
             console.log("Initializing RunAnywhere SDK...");
 
-            // Initialize RunAnywhere SDK
+            // 1. Initialize SDK
             await RunAnywhere.initialize({
                 environment: SDKEnvironment.Development,
             });
 
-            await new Promise((r) => setTimeout(r, 1000));
+            // 2. Register backends
+            LlamaCPP.register();
+            ONNX.register();
+
+            console.log("Backends registered successfully");
+
             this.initialized = true;
             console.log("RunAnywhere SDK initialized successfully");
         } catch (error) {

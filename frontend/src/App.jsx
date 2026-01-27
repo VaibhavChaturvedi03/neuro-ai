@@ -26,6 +26,7 @@ export default function App() {
                     <Route path="/overall" element={<Overalltest />} />
                     <Route path="/overalltest" element={<Overalltest />} />
                     <Route path="/dashboard" element={<TestDashboard />} />
+                    <Route path="/course/:courseId" element={<Coursetest />} />
                     <Route path="/course" element={<Coursetest />} />
                     <Route path="/chatbot" element={<Chatbot />} />
                 </Routes>

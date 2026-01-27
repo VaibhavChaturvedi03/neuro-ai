@@ -6,6 +6,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import contactRoutes from './routes/contact.js';
 import testRoutes from './routes/test.js';
+import courseRoutes from './routes/course.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -24,12 +25,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.json({ message: 'NeuroAI API Server' });
+  res.json({ message: 'NeuroAI API Server', status: 'running' });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is healthy' });
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api/courses', courseRoutes);
 
 app.use(errorHandler);
 

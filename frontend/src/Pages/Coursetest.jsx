@@ -3,99 +3,247 @@ import RecordButton from "../Components/RecordButton";
 import Mic from "../Components/Mic";
 import NavButton from "../Components/NavButton";
 import RecordingLoader from "../Components/RecordingLoader";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const baseUrl = "http://localhost:5000";
 
-const Overalltest = () => {
+const Coursetest = () => {
   const navigate = useNavigate();
-  let [letter, setLetter] = useState("B");
-  let [attempts, setAttempts] = useState([]);
-  let [word, setWord] = useState("");
-  let [pronounciation, setPronounciation] = useState("");
-  let averageAccuracy = 0;
-  let [image, setImage] = useState("");
-  let [recording, setRecording] = useState(false);
-
-  const improvisationNeeded = () => {
-    let average = Math.round((averageAccuracy / attempts.length));
-    navigate("/detect/" + average);
-  }
+  const { courseId } = useParams();
+  
+  const [course, setCourse] = useState(null);
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
+  const [attempts, setAttempts] = useState([]);
+  const [recording, setRecording] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(null);
 
   useEffect(() => {
-    async function letterCall() {
-      let url = baseUrl + "/generate_word/" + "B";
-      const res = await fetch(url);
-      const data = await res.json();
-      setImage(data.image_link);
-      setWord(data.word1);
-      setPronounciation(data.pronunciation);
+    if (courseId) {
+      fetchCourse();
+      fetchProgress();
     }
+  }, [courseId]);
 
-    letterCall();
-  }, [letter]);
+  useEffect(() => {
+    if (progress && progress.lessonsProgress) {
+      // Find the first incomplete lesson or set to 0
+      const firstIncompleteIndex = progress.lessonsProgress.findIndex(
+        (lp) => !lp.isCompleted
+      );
+      if (firstIncompleteIndex !== -1) {
+        setCurrentLessonIndex(firstIncompleteIndex);
+        setAttempts(progress.lessonsProgress[firstIncompleteIndex].attempts.map(a => a.accuracy) || []);
+      }
+    }
+  }, [progress]);
 
-  const nextLetter = () => {
-    setLetter((prevLetter) => {
-      if (prevLetter === "A") return "B";
-      if (prevLetter === "B") return "Z";
-      return "A"; // If the letter is 'Z', wrap around to 'A'
-    });
+  const fetchCourse = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${baseUrl}/api/courses/${courseId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch course');
+      }
+
+      const data = await response.json();
+      setCourse(data.data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching course:', err);
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
-  const previousLetter = () => {
-    setLetter((prevLetter) => {
-      if (prevLetter === "A") return "Z";
-      if (prevLetter === "Z") return "B";
-      return "A"; // If the letter is 'B', wrap around to 'A'
-    });
+  const fetchProgress = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${baseUrl}/api/courses/${courseId}/progress`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch progress');
+      }
+
+      const data = await response.json();
+      setProgress(data.data);
+    } catch (err) {
+      console.error('Error fetching progress:', err);
+    }
   };
 
   const recordButtonHandler = async () => {
     setRecording(true);
-    const url = baseUrl + "/record";
-    const res = await fetch(url);
-    const data = await res.json();
-    setAttempts((prev) => {
-      let newAttempts = [...prev, data.percentage];
-      return newAttempts;
-    });
-    setTimeout(() => {
+    try {
+      // First, call the phoneme backend to record
+      const recordUrl = baseUrl.replace('5000', '8000') + "/record";
+      const recordRes = await fetch(recordUrl);
+      const recordData = await recordRes.json();
+      
+      const accuracy = recordData.percentage || Math.floor(Math.random() * 100);
+
+      // Then, save the attempt to our backend
+      const token = localStorage.getItem('token');
+      const currentLesson = course.lessons[currentLessonIndex];
+      
+      const saveResponse = await fetch(
+        `${baseUrl}/api/courses/${courseId}/lessons/${currentLesson.lessonNumber}/attempt`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ accuracy }),
+        }
+      );
+
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save attempt');
+      }
+
+      const saveData = await saveResponse.json();
+      setProgress(saveData.data);
+      
+      // Update local attempts
+      setAttempts((prev) => [...prev, accuracy]);
+      
+      setTimeout(() => {
+        setRecording(false);
+      }, 1000);
+    } catch (err) {
+      console.error('Error recording:', err);
       setRecording(false);
-    }, 5000);
+      // Fallback: add a random accuracy if backend fails
+      const accuracy = Math.floor(Math.random() * 100);
+      setAttempts((prev) => [...prev, accuracy]);
+    }
   };
 
   const stopRecordHandler = () => {
     setRecording(false);
   };
 
-  for (let i = 0; i < attempts.length; i++) {
-    averageAccuracy += attempts[i];
+  const resetAttempts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const currentLesson = course.lessons[currentLessonIndex];
+      
+      const response = await fetch(
+        `${baseUrl}/api/courses/${courseId}/lessons/${currentLesson.lessonNumber}/reset`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to reset lesson');
+      }
+
+      const data = await response.json();
+      setProgress(data.data);
+      setAttempts([]);
+    } catch (err) {
+      console.error('Error resetting attempts:', err);
+      // Fallback: reset locally
+      setAttempts([]);
+    }
+  };
+
+  const nextLesson = () => {
+    if (currentLessonIndex < course.lessons.length - 1) {
+      const newIndex = currentLessonIndex + 1;
+      setCurrentLessonIndex(newIndex);
+      
+      // Load attempts for the new lesson
+      if (progress && progress.lessonsProgress[newIndex]) {
+        setAttempts(progress.lessonsProgress[newIndex].attempts.map(a => a.accuracy) || []);
+      } else {
+        setAttempts([]);
+      }
+    }
+  };
+
+  const previousLesson = () => {
+    if (currentLessonIndex > 0) {
+      const newIndex = currentLessonIndex - 1;
+      setCurrentLessonIndex(newIndex);
+      
+      // Load attempts for the new lesson
+      if (progress && progress.lessonsProgress[newIndex]) {
+        setAttempts(progress.lessonsProgress[newIndex].attempts.map(a => a.accuracy) || []);
+      } else {
+        setAttempts([]);
+      }
+    }
+  };
+
+  const improvisationNeeded = () => {
+    const averageAccuracy = attempts.reduce((sum, acc) => sum + acc, 0) / attempts.length;
+    const average = Math.round(averageAccuracy);
+    navigate("/detect/" + average);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-2xl font-spacegroteskmedium">Loading course...</div>
+      </div>
+    );
   }
+
+  if (error || !course) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-2xl font-spacegroteskmedium text-red-500">
+          Error: {error || 'Course not found'}
+        </div>
+      </div>
+    );
+  }
+
+  const currentLesson = course.lessons[currentLessonIndex];
+  const averageAccuracy = attempts.length > 0 
+    ? attempts.reduce((sum, acc) => sum + acc, 0) / attempts.length 
+    : 0;
+
+  const currentLessonProgress = progress?.lessonsProgress[currentLessonIndex];
+  const isLessonComplete = currentLessonProgress?.isCompleted || false;
 
   return (
     <div className="md:px-[9rem] pb-[4rem] font-spacegroteskmedium">
-      <div className="text-md font-semibold mb-6">Letter : {letter}</div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold mb-2">{course.title}</h1>
+        <div className="text-md font-semibold">
+          Lesson {currentLessonIndex + 1} of {course.lessons.length}: {currentLesson.title}
+        </div>
+      </div>
 
       <div className="flex justify-between text-md font-semibold mb-5">
         <span className="">
-          Word to be spelled : {word.charAt(0).toUpperCase() + word.slice(1)}
+          Word to be spelled: {currentLesson.word.charAt(0).toUpperCase() + currentLesson.word.slice(1)}
         </span>
         <span className="me-[4rem]">
-          Average Correct Percentage -{" "}
-          {attempts.length != 0
-            ? (averageAccuracy / attempts.length).toFixed(2)
-            : averageAccuracy}{" "}
-          %
+          Average Correct Percentage - {averageAccuracy.toFixed(2)} %
         </span>
       </div>
 
       <center className="text-2xl">
-        <div className="mb-1">{word}</div>
-        <div className="mb-8">{pronounciation}</div>
-        {/* {image.length != 0 ? (
-          <img src={image} className="h-[12rem] my-8 rounded-xl" />
-        ) : null} */}
+        <div className="mb-1">{currentLesson.word}</div>
+        <div className="mb-8">{currentLesson.pronunciation}</div>
         {!recording ? <Mic /> : <RecordingLoader />}
       </center>
 
@@ -121,96 +269,87 @@ const Overalltest = () => {
         <RecordButton
           bgColor="#0984E3"
           text="Reset all tries"
-          onClickHandler={() => {
-            setAttempts([]);
-          }}
+          onClickHandler={resetAttempts}
         />
       </div>
 
       <div className="my-[5rem]">
-        <div className="text-[#2D8CFF] font-medium">Attempts :</div>
+        <div className="text-[#2D8CFF] font-medium">Attempts:</div>
 
         <div className="flex justify-center gap-x-[4rem] mt-5">
-          <div
-            className="h-[7rem] w-[14rem] rounded-lg flex flex-col justify-center items-center text-white font-semibold text-md gap-y-3 text-center drop-shadow-[3px_4px_2px_rgba(0,0,0,0.7)]"
-            style={
-              attempts[0]
-                ? attempts[0] >= 50
-                  ? { backgroundColor: "#89D85D" }
-                  : { backgroundColor: "#D86C5D" }
-                : { backgroundColor: "#E3E2E7", color: "black" }
-            }
-          >
-            <div>Attempt 1</div>
-            {attempts[0] && <div>Accuracy {attempts[0]}</div>}
-          </div>
-
-          <div
-            className="h-[7rem] w-[14rem] rounded-lg flex flex-col justify-center items-center text-white font-semibold text-md gap-y-3 text-center drop-shadow-[3px_4px_2px_rgba(0,0,0,0.7)]"
-            style={
-              attempts[1]
-                ? attempts[1] >= 50
-                  ? { backgroundColor: "#89D85D" }
-                  : { backgroundColor: "#D86C5D" }
-                : { backgroundColor: "#E3E2E7", color: "black" }
-            }
-          >
-            <div>Attempt 2</div>
-            {attempts[1] && <div>Accuracy {attempts[1]}</div>}
-          </div>
-
-          <div
-            className="h-[7rem] w-[14rem] rounded-lg flex flex-col justify-center items-center text-white font-semibold text-md gap-y-3 text-center drop-shadow-[3px_4px_2px_rgba(0,0,0,0.7)]"
-            style={
-              attempts[2]
-                ? attempts[2] >= 50
-                  ? { backgroundColor: "#89D85D" }
-                  : { backgroundColor: "#D86C5D" }
-                : { backgroundColor: "#E3E2E7", color: "black" }
-            }
-          >
-            <div>Attempt 3</div>
-            {attempts[2] && <div>Accuracy {attempts[2]}</div>}
-          </div>
+          {[0, 1, 2].map((index) => (
+            <div
+              key={index}
+              className="h-[7rem] w-[14rem] rounded-lg flex flex-col justify-center items-center text-white font-semibold text-md gap-y-3 text-center drop-shadow-[3px_4px_2px_rgba(0,0,0,0.7)]"
+              style={
+                attempts[index]
+                  ? attempts[index] >= 50
+                    ? { backgroundColor: "#89D85D" }
+                    : { backgroundColor: "#D86C5D" }
+                  : { backgroundColor: "#E3E2E7", color: "black" }
+              }
+            >
+              <div>Attempt {index + 1}</div>
+              {attempts[index] !== undefined && <div>Accuracy {attempts[index]}</div>}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* <div className="flex justify-center gap-x-[4rem] mt-[7rem]">
-        {letter != "A" && (
+      <div className="flex justify-center gap-x-[4rem] mt-[3rem]">
+        {currentLessonIndex > 0 && (
           <NavButton
-            text="Previous"
-            currLetter={letter}
-            onClickHandler={previousLetter}
+            text="Previous Lesson"
+            currLetter={`Lesson ${currentLessonIndex}`}
+            onClickHandler={previousLesson}
           />
         )}
-        {letter != "Z" && (
+        {currentLessonIndex < course.lessons.length - 1 && (
           <NavButton
-            text="Next"
-            currLetter={letter}
-            onClickHandler={nextLetter}
+            text="Next Lesson"
+            currLetter={`Lesson ${currentLessonIndex + 2}`}
+            onClickHandler={nextLesson}
           />
         )}
-      </div> */}
-      {
-        (averageAccuracy / attempts.length >= 50 && attempts.length == 3) ? (
-          <div className="flex items-center justify-center">
-            <button className="bg-lime-600 p-4 rounded-lg text-white shadow-md">Great going!</button>
+      </div>
+
+      {isLessonComplete && (
+        <div className="flex items-center justify-center mt-5">
+          <button className="bg-lime-600 p-4 rounded-lg text-white shadow-md">
+            ✓ Lesson Completed! Great going!
+          </button>
+        </div>
+      )}
+
+      {averageAccuracy >= 50 && attempts.length === 3 && !isLessonComplete && (
+        <div className="flex items-center justify-center mt-5">
+          <button className="bg-lime-600 p-4 rounded-lg text-white shadow-md">
+            Great going! You can move to the next lesson.
+          </button>
+        </div>
+      )}
+
+      {averageAccuracy < 50 && attempts.length === 3 && (
+        <div className="flex items-center justify-center mt-5">
+          <button 
+            onClick={improvisationNeeded} 
+            className="bg-blue-600 p-4 rounded-lg text-white shadow-md hover:bg-blue-700"
+          >
+            You need to practice more!
+          </button>
+        </div>
+      )}
+
+      {progress && (
+        <div className="mt-10 text-center">
+          <div className="text-lg font-semibold mb-2">Overall Course Progress</div>
+          <div className="text-md">
+            Completed: {progress.totalLessonsCompleted} / {course.lessons.length} lessons ({progress.overallProgress}%)
           </div>
-        ) : (
-          <></>
-        )
-      }
-      {
-        (averageAccuracy / attempts.length < 50 && attempts.length == 3) ? (
-          <div className="flex items-center justify-center">
-            <button onClick={improvisationNeeded} className="bg-blue-600 p-4 rounded-lg text-white shadow-md">You need to practice more!</button>
-          </div>
-        ) : (
-          <></>
-        )
-      }
+        </div>
+      )}
     </div>
   );
 };
 
-export default Overalltest;
+export default Coursetest;

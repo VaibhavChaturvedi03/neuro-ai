@@ -22,12 +22,12 @@ class RuntimeManager {
         try {
             console.log("Initializing RunAnywhere SDK...");
 
-            // 1. Initialize SDK
+            // 1. Initialize SDK first
             await RunAnywhere.initialize({
                 environment: SDKEnvironment.Development,
             });
 
-            // 2. Register backends
+            // 2. Register backends (synchronous, no await needed per docs)
             LlamaCPP.register();
             ONNX.register();
 
@@ -40,6 +40,10 @@ class RuntimeManager {
             this.initializing = false;
             throw error;
         }
+    }
+
+    isReady() {
+        return this.initialized;
     }
 }
 

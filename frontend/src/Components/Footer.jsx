@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom';
+
 const Footer = () => {
     const currentYear = new Date().getFullYear();
 
     const quickAccess = [
-        { label: 'Features', href: '/features' },
+        { label: 'Features', href: '/', state: { scrollToFeatures: true } },
         { label: 'Pricing', href: '/pricing' },
         { label: 'Articles', href: '/articles' },
         { label: 'About', href: '/about' },
@@ -13,81 +15,49 @@ const Footer = () => {
         { label: 'Privacy Policy', href: '/privacy' },
         { label: 'Terms of Service', href: '/terms' },
         { label: 'Cookie Policy', href: '/cookies' },
-        { label: 'Security', href: '/security' }
     ];
 
     
 
     return (
-        <footer className="bg-gray-200 dark:bg-gray-800">
-            <div className="container px-4 mx-auto">
-                <div className="pt-24 pb-11 mx-auto max-w-4xl lg:items-start lg:justify-start md:items-start md:justify-start flex items-center justify-center flex-col">
-                    <a
-                        className="block md:mx-auto mb-5 max-w-max text-center"
-                        href="#"
-                    >
-                        <div className="font-spacegroteskbold lg:text-5xl md:text-4xl text-3xl text-left dark:text-white">
-                            NeuroAi
+        <footer className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white mt-auto transition-colors duration-200 border-t-2 border-gray-200 dark:border-gray-700">
+            {/* Main Footer Content */}
+            <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {/* About NeuroAi */}
+                    <div className="lg:col-span-2">
+                        <div className="flex items-center mb-4">
+                            <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-2 rounded-lg shadow-lg">
+                                <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                            </div>
+                            <div className="ml-3">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">NeuroAi</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Speech Learning Platform</p>
+                            </div>
                         </div>
-                    </a>
-                    <div className="flex flex-wrap text-center justify-center w-full">
-                        <div className="w-full md:w-auto p-3 md:px-6">
-                            <a
-                                className="inline-block text-lg text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white font-spacegroteskmedium"
-                                href="/terms"
-                            >
-                                Terms
-                            </a>
-                        </div>
-                        <div className="w-full md:w-auto p-3 md:px-6">
-                            <a
-                                className="inline-block text-lg text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white font-spacegroteskmedium"
-                                href="/privacy"
-                            >
-                                Privacy
-                            </a>
-                        </div>
-                        <div className="w-full md:w-auto p-3 md:px-6">
-                            <a
-                                className="inline-block text-lg text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white font-spacegroteskmedium"
-                                href=""
-                            >
-                                Contact Us
-                            </a>
-                        </div>
-                        <div className="w-full md:w-auto p-3 md:px-6">
-                            <a
-                                className="inline-block text-lg text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white font-spacegroteskmedium"
-                                href="/careers"
-                            >
-                                Careers
-                            </a>
-                        </div>
-                        <div className="w-full md:w-auto p-3 md:px-6">
-                            <a
-                                className="inline-block text-lg text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:hover:text-white font-spacegroteskmedium"
-                                href="/pricing"
-                            >
-                                Pricing
-                            </a>
-                        </div>
-                        <p className="text-gray-300 leading-relaxed">
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                             Helping every child find their voice through safe, intelligent speech learning. A secure, accessible digital platform empowering children with AI-driven speech therapy while maintaining the highest standards of security and privacy.
                         </p>
                     </div>
 
                     {/* Quick Access */}
                     <div>
-                        <h3 className="text-lg font-semibold mb-4 text-white">Quick Access</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quick Access</h3>
                         <ul className="space-y-3">
                             {quickAccess.map((link) => (
                                 <li key={link.label}>
-                                    <a href={link.href} className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                                    <Link 
+                                        to={link.href} 
+                                        state={link.state}
+                                        className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white transition-colors duration-200 flex items-center group"
+                                    >
                                         <svg className="h-3 w-3 mr-2 opacity-50 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                         </svg>
                                         {link.label}
-                                    </a>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -95,11 +65,14 @@ const Footer = () => {
 
                     {/* External Links */}
                     <div>
-                        <h3 className="text-lg font-semibold mb-4 text-white">Resources</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Resources</h3>
                         <ul className="space-y-3">
                             {externalLinks.map((link) => (
                                 <li key={link.label}>
-                                    <a href={link.href} className="text-gray-300 hover:text-white transition-colors duration-200 flex items-center group">
+                                    <a 
+                                        href={link.href} 
+                                        className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white transition-colors duration-200 flex items-center group"
+                                    >
                                         <svg className="h-3 w-3 mr-2 opacity-50 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                         </svg>
@@ -110,12 +83,38 @@ const Footer = () => {
                         </ul>
                     </div>
                 </div>
+
+              
+              
             </div>
-            <div className="border-b border-gray-100 dark:border-gray-700" />
-            <div className="container px-4 mx-auto">
-                <p className="py-10 md:pb-20 text-md text-gray-400 dark:text-gray-500 font-spacegroteskmedium text-center">
-                    Copyright NeuroAi 2025
-                </p>
+
+            {/* Bottom Bar */}
+            <div className="border-t border-gray-300 dark:border-gray-700">
+                <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                        {/* Copyright */}
+                        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
+                            <p className="text-gray-600 dark:text-gray-400 text-sm">
+                                © {currentYear} NeuroAi. All rights reserved.
+                            </p>
+                            <div className="flex items-center space-x-4 text-sm">
+                                <a 
+                                    href="/sitemap" 
+                                    className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-white transition-colors"
+                                >
+                                    Sitemap
+                                </a>
+                                <span className="text-gray-400 dark:text-gray-600">|</span>
+                                <a 
+                                    href="/accessibility" 
+                                    className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-white transition-colors"
+                                >
+                                    Accessibility
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </footer>
     );

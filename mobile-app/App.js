@@ -1,12 +1,12 @@
 import { NavigationContainer } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    StatusBar,
     StyleSheet,
     Text,
     View,
-} from "expo-status-bar";
-import { useEffect, useState } from "react";
+} from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import modelManager from "./src/ai/modelManager";
 import { COLORS, SIZES } from "./src/constants/theme";
@@ -23,23 +23,33 @@ export default function App() {
 
     const initializeApp = async () => {
         try {
+            console.log('=== Starting App Initialization ===');
+            
             // Check if models are already downloaded
             const status = await modelManager.checkModelsStatus();
+            console.log('Model status:', status);
 
-            if (status.whisper && status.llm && status.tts) {
-                // Models already cached
+            if (status.whisper && status.llm) {
+                // Models cached, load them into memory
+                console.log('Models cached, loading into memory...');
+                await modelManager.ensureModelsLoaded();
+                console.log('Models loaded successfully');
                 setModelsReady(true);
                 return;
             }
 
-            // Download models
+            // Download models with progress
+            console.log('Downloading models...');
             await modelManager.initializeModels((progress) => {
                 setDownloadProgress(progress);
             });
 
+            console.log('=== App Initialization Complete ===');
             setModelsReady(true);
         } catch (error) {
             console.error("Failed to initialize models:", error);
+            console.error("Error message:", error.message);
+            console.error("Error stack:", error.stack);
             // Continue anyway - app will work with fallbacks
             setModelsReady(true);
         }

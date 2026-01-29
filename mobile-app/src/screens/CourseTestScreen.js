@@ -4,7 +4,8 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
+  Alert
 } from 'react-native';
 import {
   Mic,
@@ -37,12 +38,17 @@ const CourseTestScreen = () => {
   useEffect(() => {
     const fetchWord = async () => {
       try {
-        const data = await generateWord('B');
-        setImage(data.image_link);
-        setWord(data.word1);
-        setPronunciation(data.pronunciation);
+        console.log('Fetching word for letter:', letter);
+        const data = await generateWord(letter);
+        console.log('Word data:', data);
+        setImage(data.image_link || '📝');
+        setWord(data.word1 || 'Apple');
+        setPronunciation(data.pronunciation || '/ˈæp.əl/');
       } catch (error) {
         console.error('Error fetching word:', error);
+        setWord('Apple');
+        setPronunciation('/ˈæp.əl/');
+        setImage('🍎');
       }
     };
 
@@ -66,16 +72,23 @@ const CourseTestScreen = () => {
   };
 
   const recordButtonHandler = async () => {
+    if (!word) {
+      Alert.alert('Error', 'No word loaded. Please try again.');
+      return;
+    }
+
     setRecording(true);
     try {
-      const data = await recordAudio();
+      console.log('Recording for word:', word);
+      const data = await recordAudio(word, [letter]);
       setAttempts((prev) => [...prev, data.percentage]);
-      setTimeout(() => {
-        setRecording(false);
-      }, 5000);
     } catch (error) {
       console.error('Error recording:', error);
-      setRecording(false);
+      Alert.alert('Error', 'Recording failed. Please try again.');
+    } finally {
+      setTimeout(() => {
+        setRecording(false);
+      }, 500);
     }
   };
 

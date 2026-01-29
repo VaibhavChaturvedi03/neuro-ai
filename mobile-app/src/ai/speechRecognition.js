@@ -1,5 +1,6 @@
 import { RunAnywhere } from "@runanywhere/core";
 import { Audio } from "expo-av";
+import * as FileSystem from 'expo-file-system';
 import runtimeManager from "./runtime";
 
 class SpeechRecognitionService {
@@ -21,6 +22,7 @@ class SpeechRecognitionService {
         await Audio.setAudioModeAsync({
             allowsRecordingIOS: true,
             playsInSilentModeIOS: true,
+            staysActiveInBackground: false,
         });
 
         this.initialized = true;
@@ -32,11 +34,30 @@ class SpeechRecognitionService {
 
         try {
             const recording = new Audio.Recording();
-            await recording.prepareToRecordAsync(
-                Audio.RecordingOptionsPresets.HIGH_QUALITY,
-            );
-            await recording.startAsync();
+            
+            // Configure to record as WAV for Whisper compatibility
+            await recording.prepareToRecordAsync({
+                android: {
+                    extension: '.wav',
+                    outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_DEFAULT,
+                    audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_DEFAULT,
+                    sampleRate: 16000,
+                    numberOfChannels: 1,
+                    bitRate: 128000,
+                },
+                ios: {
+                    extension: '.wav',
+                    audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+                    sampleRate: 16000,
+                    numberOfChannels: 1,
+                    bitRate: 128000,
+                    linearPCMBitDepth: 16,
+                    linearPCMIsBigEndian: false,
+                    linearPCMIsFloat: false,
+                },
+            });
 
+            await recording.startAsync();
             this.recording = recording;
             console.log("Recording started");
             return recording;
@@ -54,15 +75,23 @@ class SpeechRecognitionService {
         try {
             await this.recording.stopAndUnloadAsync();
             const uri = this.recording.getURI();
-
             console.log("Recording stopped, transcribing...");
+            console.log("Audio URI:", uri);
 
-            // Use RunAnywhere.transcribeFile() directly
+            // Check if file exists
+            const fileInfo = await FileSystem.getInfoAsync(uri);
+            console.log("File info:", fileInfo);
+
+            if (!fileInfo.exists) {
+                throw new Error("Recording file does not exist");
+            }
+
+            // Transcribe using RunAnywhere
             const result = await RunAnywhere.transcribeFile(uri, {
                 language: "en",
             });
 
-            console.log("Transcription:", result.text);
+            console.log("Transcription result:", result.text);
             console.log("Confidence:", result.confidence);
 
             this.recording = null;

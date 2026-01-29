@@ -54,12 +54,11 @@ const AuthScreen = ({ route }) => {
   const [showProblemPicker, setShowProblemPicker] = useState(false);
 
   const navigation = useNavigation();
-  const { login } = useAuth();
+  const { login, signup } = useAuth(); // FIXED: Import signup
 
   const handleSubmit = async () => {
     console.log('=== AUTH SUBMIT ===');
     console.log('Mode:', mode);
-    console.log('Form data:', formData);
     
     setError('');
     setLoading(true);
@@ -104,7 +103,6 @@ const AuthScreen = ({ route }) => {
         }
 
         console.log('Calling signup...');
-        // FIXED: Call signup with correct parameters
         result = await signup(
           formData.name,
           formData.email,

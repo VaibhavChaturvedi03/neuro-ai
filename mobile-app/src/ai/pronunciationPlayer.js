@@ -1,5 +1,5 @@
 import { Audio } from "expo-av";
-import Speech from "expo-speech";
+import * as Speech from "expo-speech";
 import runtimeManager from "./runtime";
 
 class PronunciationPlayerService {
@@ -26,28 +26,43 @@ class PronunciationPlayerService {
         try {
             await this.initialize();
 
-            // Use Expo Speech as TTS (RunAnywhere TTS setup not shown in docs)
-            Speech.speak(word, {
+            if (!word) {
+                console.warn("No word provided to play");
+                return;
+            }
+
+            console.log("Playing pronunciation:", word);
+
+            // Use Expo Speech module
+            const isSpeaking = await Speech.isSpeakingAsync();
+            if (isSpeaking) {
+                await Speech.stop();
+            }
+
+            await Speech.speak(word, {
                 language: "en-US",
                 pitch: 1.0,
                 rate: 0.75,
             });
-
-            console.log("Playing pronunciation:", word);
         } catch (error) {
             console.error("Failed to play pronunciation:", error);
         }
     }
 
     async cleanup() {
-        if (this.currentSound) {
-            try {
+        try {
+            const isSpeaking = await Speech.isSpeakingAsync();
+            if (isSpeaking) {
+                await Speech.stop();
+            }
+            
+            if (this.currentSound) {
                 await this.currentSound.stopAsync();
                 await this.currentSound.unloadAsync();
                 this.currentSound = null;
-            } catch (error) {
-                console.error("Error cleaning up sound:", error);
             }
+        } catch (error) {
+            console.error("Error cleaning up sound:", error);
         }
     }
 }

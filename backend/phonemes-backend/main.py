@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, request
-import pyaudio
 import wave
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 from groq import Groq
+import io
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -151,51 +151,26 @@ def check(word_given, word_recieved, check_for):
 #     )
 #     print(transcription.text)
       
-@app.route('/record', methods=["GET", "POST"])
+@app.route('/record', methods=["POST"])
 def record():
     try:
         if not COUPLED:
             return jsonify({"error": "No letter selected. Please call /test/<letter> first"}), 400
-            
-        chunk = 1024  # Record in chunks of 1024 samples
-        sample_format = pyaudio.paInt16  # 16 bits per sample
-        channels = 2
-        fs = 44100  # Record at 44100 samples per second
-        seconds = 5
+        
+        # Check if audio file is in the request
+        if 'audio' not in request.files:
+            return jsonify({"error": "No audio file provided"}), 400
+        
+        audio_file = request.files['audio']
+        
+        if audio_file.filename == '':
+            return jsonify({"error": "No audio file selected"}), 400
+        
+        # Save the uploaded audio file
         filename = "output.wav"
-
-        p = pyaudio.PyAudio()  # Create an interface to PortAudio
-
-        print('Recording...')
-
-        stream = p.open(format=sample_format,
-                        channels=channels,
-                        rate=fs,
-                        frames_per_buffer=chunk,
-                        input=True)
-
-        frames = []  # Initialize array to store frames
-
-        # Store data in chunks for 5 seconds
-        for i in range(0, int(fs / chunk * seconds)):
-            data = stream.read(chunk)
-            frames.append(data)
-
-        # Stop and close the stream
-        stream.stop_stream()
-        stream.close()
-        # Terminate the PortAudio interface
-        p.terminate()
-
-        print('Finished recording')
-
-        # Save the recorded data as a WAV file
-        wf = wave.open(filename, 'wb')
-        wf.setnchannels(channels)
-        wf.setsampwidth(p.get_sample_size(sample_format))
-        wf.setframerate(fs)
-        wf.writeframes(b''.join(frames))
-        wf.close()
+        audio_file.save(filename)
+        
+        print('Audio file received and saved')
 
         # Initialize Groq client
         if not OPEN_API_KEY:

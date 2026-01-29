@@ -300,4 +300,5 @@ def generate_word(lettergiven):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5002)  # Using port 5002 to avoid conflicts with other backends
+    port = int(os.getenv("PORT", 5002))  # Use PORT from Render or default to 5002
+    app.run(host="0.0.0.0", port=port, debug=False)  # Bind to 0.0.0.0 for production

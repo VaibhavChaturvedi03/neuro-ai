@@ -63,45 +63,44 @@ export const testWord = async (letter) => {
 // Record audio and analyze with AI
 export const recordAudio = async (expectedWord, targetPhonemes = []) => {
   try {
-    console.log('Starting recording for word:', expectedWord);
+    console.log('=== STARTING AUDIO RECORDING ===');
+    console.log('Expected word:', expectedWord);
+    console.log('Target phonemes:', targetPhonemes);
     
     if (!expectedWord) {
       throw new Error('Expected word is required');
     }
 
     let transcription = '';
-    let transcriptionFailed = false;
 
     try {
+      console.log('Initializing speech recognition...');
       // Start recording
       await speechRecognition.startRecording();
+      console.log('Recording started, waiting 3 seconds...');
       
       // Wait for 3 seconds
       await new Promise(resolve => setTimeout(resolve, 3000));
       
+      console.log('Stopping recording and transcribing...');
       // Stop and transcribe
       transcription = await speechRecognition.stopRecordingAndTranscribe();
-      console.log('Transcription successful:', transcription);
+      console.log('✅ Transcription successful:', transcription);
     } catch (error) {
-      console.error('Transcription failed, using fallback:', error);
-      transcriptionFailed = true;
-      // Use a fallback transcription for testing
-      transcription = expectedWord.toLowerCase();
+      console.error('❌ Transcription failed:', error);
+      console.error('Error details:', error.message);
+      throw new Error(`Speech recognition failed: ${error.message}`);
     }
 
-    // Always analyze with AI, even if transcription failed
+    // Always analyze with AI after successful transcription
+    console.log('Analyzing with AI...');
     const analysisResult = await phonemeAnalyzer.analyzePhonemes(
       transcription,
       expectedWord,
       targetPhonemes
     );
 
-    console.log('Analysis result:', analysisResult);
-
-    // If transcription failed, add note to feedback
-    if (transcriptionFailed) {
-      analysisResult.feedback = `[Note: Audio transcription unavailable] ${analysisResult.feedback}`;
-    }
+    console.log('✅ Analysis complete:', analysisResult);
 
     return {
       transcription: analysisResult.transcription,
@@ -110,15 +109,9 @@ export const recordAudio = async (expectedWord, targetPhonemes = []) => {
       timestamp: analysisResult.timestamp,
     };
   } catch (error) {
-    console.error('Error in recordAudio:', error);
-    
-    // Return a fallback result so the app doesn't crash
-    return {
-      transcription: expectedWord.toLowerCase(),
-      percentage: 50,
-      feedback: `Could not analyze recording. Try saying "${expectedWord}" clearly and slowly.`,
-      timestamp: new Date().toISOString(),
-    };
+    console.error('❌ Error in recordAudio:', error);
+    console.error('Full error:', error.stack);
+    throw error; // Re-throw to show user the actual error
   }
 };
 
@@ -163,3 +156,4 @@ Keep response under 80 words, child-friendly language.`;
     return { remedy, percentage, phonemes: [phoneme1, phoneme2] };
   }
 };
+    

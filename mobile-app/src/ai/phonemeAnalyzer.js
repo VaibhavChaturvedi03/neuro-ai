@@ -32,26 +32,31 @@ class PhonemeAnalyzerService {
         try {
             await this.initialize();
 
-            const prompt = `You are a speech therapist analyzing a child's pronunciation.
+            console.log('=== AI ANALYSIS ===');
+            console.log('Input:', { transcription, expectedWord, targetPhonemes });
+
+            const prompt = `You are a friendly speech therapist analyzing a child's pronunciation.
 
 Expected word: "${expectedWord}"
 What they said: "${transcription}"
-Target phonemes to evaluate: ${targetPhonemes.join(", ")}
+Target phonemes: ${targetPhonemes.join(", ")}
 
-Provide:
-1. Accuracy percentage (0-100)
-2. Specific phoneme errors detected
-3. One simple tip for improvement
+Provide brief, encouraging feedback:
+1. Start with accuracy percentage (e.g., "95% accurate!")
+2. Highlight what they did well
+3. Give one simple tip if needed
 
-Keep response under 50 words, child-friendly.`;
+Keep response under 60 words, warm and supportive tone.`;
 
-            // Use RunAnywhere.generate() directly
             const result = await RunAnywhere.generate(prompt, {
-                maxTokens: 150,
-                temperature: 0.3,
+                maxTokens: 120,
+                temperature: 0.5,
             });
 
             const response = result.text;
+            console.log('AI Response:', response);
+            
+            // Extract accuracy from AI response or calculate
             const accuracyMatch = response.match(/(\d+)%/);
             const accuracy = accuracyMatch
                 ? parseInt(accuracyMatch[1])
@@ -65,41 +70,31 @@ Keep response under 50 words, child-friendly.`;
                 timestamp: new Date().toISOString(),
             };
         } catch (error) {
-            console.error(
-                "LLM analysis failed, using simple comparison:",
-                error,
-            );
+            console.error('AI analysis failed, using simple comparison:', error);
 
+            const accuracy = this.calculateSimpleAccuracy(transcription, expectedWord);
+            
             return {
-                accuracy: this.calculateSimpleAccuracy(
-                    transcription,
-                    expectedWord,
-                ),
+                accuracy,
                 transcription,
                 expectedWord,
-                feedback: this.generateSimpleFeedback(
-                    transcription,
-                    expectedWord,
-                ),
+                feedback: this.generateSimpleFeedback(transcription, expectedWord, accuracy),
                 timestamp: new Date().toISOString(),
             };
         }
     }
 
-    generateSimpleFeedback(transcription, expectedWord) {
-        const accuracy = this.calculateSimpleAccuracy(
-            transcription,
-            expectedWord,
-        );
-
-        if (accuracy >= 90) {
-            return `Excellent! You pronounced "${expectedWord}" very clearly. Keep it up! 🎉`;
-        } else if (accuracy >= 70) {
-            return `Good try! "${transcription}" is close to "${expectedWord}". Practice the sound more slowly. 👍`;
-        } else if (accuracy >= 50) {
-            return `You're getting there! Try breaking "${expectedWord}" into syllables and say each part slowly. 💪`;
+    generateSimpleFeedback(transcription, expectedWord, accuracy) {
+        if (accuracy >= 95) {
+            return `🎉 Perfect! You said "${transcription}" - that's exactly right! Your pronunciation of "${expectedWord}" is excellent. Keep up the amazing work!`;
+        } else if (accuracy >= 80) {
+            return `⭐ Great job! You said "${transcription}" which is very close to "${expectedWord}". Your pronunciation is almost perfect. Try one more time!`;
+        } else if (accuracy >= 60) {
+            return `👍 Good try! You said "${transcription}" - you're getting "${expectedWord}" right! Focus on saying each sound clearly and slowly.`;
+        } else if (accuracy >= 40) {
+            return `💪 Nice effort! Let's practice "${expectedWord}" together. Try breaking it into smaller parts: say each syllable slowly, then combine them.`;
         } else {
-            return `Let's practice "${expectedWord}" together. Listen carefully and repeat after the example. 🎯`;
+            return `🎯 Let's work on "${expectedWord}"! Listen to the example carefully. Watch how the mouth moves. Take a deep breath and try saying it slowly.`;
         }
     }
 
@@ -131,5 +126,7 @@ Keep response under 50 words, child-friendly.`;
         return matrix[str2.length][str1.length];
     }
 }
+
+
 
 export default new PhonemeAnalyzerService();

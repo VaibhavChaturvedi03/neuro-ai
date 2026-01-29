@@ -37,13 +37,15 @@ const OverallTestScreen = () => {
         setFeedback('');
 
         const data = await testWord(letter);
-        setImage(data.image_link);
+        console.log('Fetched word data:', data); // Debug log
+        setImage(data.image_link || '📝');
         setWord(data.word1 || 'Apple');
         setPronunciation(data.pronunciation || '/ˈæp.əl/');
       } catch (error) {
         console.error('Error fetching word:', error);
         setWord('Apple');
         setPronunciation('/ˈæp.əl/');
+        setImage('🍎');
       } finally {
         setLoading(false);
       }
@@ -78,22 +80,32 @@ const OverallTestScreen = () => {
   };
 
   const recordButtonHandler = async () => {
+    if (!word) {
+      Alert.alert('Error', 'No word loaded. Please try again.');
+      return;
+    }
+
     setRecording(true);
     setFeedback('');
 
     try {
+      console.log('=== STARTING TEST FOR WORD:', word, '===');
       const data = await recordAudio(word, [letter]);
 
+      console.log('✅ Recording complete:', data);
       setAttempts((prev) => [...prev, data]);
       setFeedback(data.feedback);
-
+    } catch (error) {
+      console.error('❌ Recording error:', error);
+      Alert.alert(
+        'Recording Failed',
+        `Could not process your recording: ${error.message}. Please check microphone permissions and try again.`,
+        [{ text: 'OK' }]
+      );
+    } finally {
       setTimeout(() => {
         setRecording(false);
       }, 500);
-    } catch (error) {
-      console.error('Error recording:', error);
-      setRecording(false);
-      setFeedback('Recording failed. Please try again.');
     }
   };
 
@@ -385,5 +397,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 });
+
 
 export default OverallTestScreen;

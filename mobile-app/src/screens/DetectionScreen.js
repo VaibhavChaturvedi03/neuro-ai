@@ -40,12 +40,16 @@ const DetectionScreen = () => {
   const fetchAIRemedy = async () => {
     setLoading(true);
     try {
+      console.log('Fetching remedy with:', { percentage, phoneme1, phoneme2 });
       const data = await getRemedy(percentage, phoneme1, phoneme2, []);
+      console.log('Remedy received:', data);
       if (data && data.remedy) {
         setRemedy(data.remedy);
       }
     } catch (error) {
       console.error('Error fetching remedy:', error);
+      // Set fallback remedy
+      setRemedy(`Great effort on phonemes ${phoneme1} and ${phoneme2}! Keep practicing daily.`);
     } finally {
       setLoading(false);
     }

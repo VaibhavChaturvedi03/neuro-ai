@@ -90,11 +90,17 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Store token and user data
-      await AsyncStorage.setItem('token', data.token);
+      // FIXED: Backend returns 'access_token' not 'token'
+      const token = data.access_token || data.token;
+      
+      if (!token) {
+        throw new Error('No token received from server');
+      }
+
+      await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('user', JSON.stringify(data.user));
       
-      setToken(data.token);
+      setToken(token);
       setUser(data.user);
 
       console.log('✅ LOGIN SUCCESSFUL (Context)');
@@ -142,11 +148,17 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || 'Signup failed');
       }
 
-      // Store token and user data
-      await AsyncStorage.setItem('token', data.token);
+      // FIXED: Backend returns 'access_token' not 'token'
+      const token = data.access_token || data.token;
+      
+      if (!token) {
+        throw new Error('No token received from server');
+      }
+
+      await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('user', JSON.stringify(data.user));
       
-      setToken(data.token);
+      setToken(token);
       setUser(data.user);
 
       console.log('✅ SIGNUP SUCCESSFUL (Context)');

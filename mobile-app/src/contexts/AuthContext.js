@@ -75,8 +75,6 @@ export const AuthProvider = ({ children }) => {
             });
 
             console.log("Response status:", response.status);
-            console.log("Response headers:", response.headers);
-
             const data = await response.json();
             console.log("Response data:", data);
 
@@ -85,16 +83,25 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.message || "Login failed");
             }
 
+            // FIXED: Backend returns 'access_token' not 'token'
+            const token = data.access_token || data.token;
+
+            if (!token) {
+                throw new Error("No token received from server");
+            }
+
             // Store token and user data
             console.log("Storing token and user data...");
-            await AsyncStorage.setItem("token", data.token);
+            console.log("Token:", token);
+            console.log("User:", data.user);
+
+            await AsyncStorage.setItem("token", token);
             await AsyncStorage.setItem("user", JSON.stringify(data.user));
 
-            setToken(data.token);
+            setToken(token);
             setUser(data.user);
 
             console.log("✅ LOGIN SUCCESSFUL");
-            console.log("User:", data.user);
             return { success: true };
         } catch (err) {
             const message = err.message || "Login failed. Please try again.";
@@ -119,10 +126,6 @@ export const AuthProvider = ({ children }) => {
         console.log("=== SIGNUP ATTEMPT ===");
         console.log("Name:", name);
         console.log("Email:", email);
-        console.log("Phone:", phoneNumber);
-        console.log("Child Age:", childAge);
-        console.log("Region:", region);
-        console.log("Problem:", problemDescription);
         console.log("API URL:", `${API_URL}/auth/register`);
 
         setIsLoading(true);
@@ -149,8 +152,6 @@ export const AuthProvider = ({ children }) => {
             });
 
             console.log("Response status:", response.status);
-            console.log("Response headers:", response.headers);
-
             const data = await response.json();
             console.log("Response data:", data);
 
@@ -159,16 +160,22 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.message || "Signup failed");
             }
 
+            // FIXED: Backend returns 'access_token' not 'token'
+            const token = data.access_token || data.token;
+
+            if (!token) {
+                throw new Error("No token received from server");
+            }
+
             // Store token and user data
             console.log("Storing token and user data...");
-            await AsyncStorage.setItem("token", data.token);
+            await AsyncStorage.setItem("token", token);
             await AsyncStorage.setItem("user", JSON.stringify(data.user));
 
-            setToken(data.token);
+            setToken(token);
             setUser(data.user);
 
             console.log("✅ SIGNUP SUCCESSFUL");
-            console.log("User:", data.user);
             return { success: true };
         } catch (err) {
             const message = err.message || "Signup failed. Please try again.";

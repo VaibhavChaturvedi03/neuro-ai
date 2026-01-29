@@ -8,76 +8,57 @@ import {
     View,
 } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import modelManager from "./src/ai/modelManager";
+import { initializeRunAnywhere } from './src/ai/initialization';
 import { COLORS, SIZES } from "./src/constants/theme";
 import { AuthProvider } from "./src/contexts/AuthContext";
 import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
-    const [modelsReady, setModelsReady] = useState(false);
-    const [downloadProgress, setDownloadProgress] = useState(null);
+    const [isAIReady, setIsAIReady] = useState(false);
+    const [aiError, setAIError] = useState(null);
+    const [aiProgress, setAIProgress] = useState('Initializing...');
 
     useEffect(() => {
-        initializeApp();
+        const init = async () => {
+            try {
+                await initializeRunAnywhere(
+                    (progress) => {
+                        setAIProgress(progress);
+                        console.log('AI Progress:', progress);
+                    },
+                    (error) => {
+                        setAIError(error.message);
+                        console.error('AI Error:', error);
+                    }
+                );
+                setIsAIReady(true);
+            } catch (error) {
+                setAIError(error.message);
+            }
+        };
+
+        init();
     }, []);
 
-    const initializeApp = async () => {
-        try {
-            console.log('=== Starting App Initialization ===');
-            
-            // Check if models are already downloaded
-            const status = await modelManager.checkModelsStatus();
-            console.log('Model status:', status);
-
-            if (status.whisper && status.llm) {
-                // Models cached, load them into memory
-                console.log('Models cached, loading into memory...');
-                await modelManager.ensureModelsLoaded();
-                console.log('Models loaded successfully');
-                setModelsReady(true);
-                return;
-            }
-
-            // Download models with progress
-            console.log('Downloading models...');
-            await modelManager.initializeModels((progress) => {
-                setDownloadProgress(progress);
-            });
-
-            console.log('=== App Initialization Complete ===');
-            setModelsReady(true);
-        } catch (error) {
-            console.error("Failed to initialize models:", error);
-            console.error("Error message:", error.message);
-            console.error("Error stack:", error.stack);
-            // Continue anyway - app will work with fallbacks
-            setModelsReady(true);
-        }
-    };
-
-    if (!modelsReady) {
+    if (!isAIReady) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
-                {downloadProgress ? (
+                {aiError ? (
+                    <Text style={styles.errorText}>{aiError}</Text>
+                ) : (
                     <>
                         <Text style={styles.loadingTitle}>
                             Downloading AI Models...
                         </Text>
                         <Text style={styles.loadingText}>
-                            {downloadProgress.modelName}
-                        </Text>
-                        <Text style={styles.loadingSubtext}>
-                            {downloadProgress.current} of{" "}
-                            {downloadProgress.total} ({downloadProgress.size})
+                            {aiProgress}
                         </Text>
                         <Text style={styles.loadingHint}>
                             This only happens once. Models are cached for
                             offline use.
                         </Text>
                     </>
-                ) : (
-                    <Text style={styles.loadingText}>Initializing...</Text>
                 )}
             </View>
         );
@@ -111,6 +92,25 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     loadingText: {
+        fontSize: SIZES.body1,
+        color: COLORS.black,
+        marginTop: 12,
+        textAlign: "center",
+    },
+    loadingHint: {
+        fontSize: SIZES.body3,
+        color: COLORS.darkGray,
+        marginTop: 16,
+        textAlign: "center",
+        fontStyle: "italic",
+    },
+    errorText: {
+        fontSize: SIZES.body1,
+        color: COLORS.red,
+        marginTop: 12,
+        textAlign: "center",
+    },
+});
         fontSize: SIZES.body1,
         color: COLORS.black,
         marginTop: 12,

@@ -164,7 +164,7 @@ export default function Home() {
 
       <div ref={mySectionRef}>
         <div className="flex items-center justify-center lg:block">
-          <div className="border-y-4 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black dark:border-white font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center dark:text-white">
+          <div id="features" className="border-y-4 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black dark:border-white font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center dark:text-white">
             Features
           </div>
         </div>
@@ -313,6 +313,168 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Pricing Section  */}
+<div id="pricing">
+  <div className="flex items-center justify-center lg:block">
+    <div className="border-y-4 p-1 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black dark:border-white font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center dark:text-white">
+      Pricing Plans
+    </div>
+  </div>
+
+  <div className="lg:px-20 px-4 lg:mt-12 md:mt-10 mt-8 pb-10">
+    <div className="grid lg:grid-cols-2 grid-cols-1 gap-16 max-w-5xl mx-auto">
+      {/* Freemium Plan */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:scale-105 transition-all duration-300 flex flex-col h-full">
+        {/* Header */}
+        <div className="mb-4">
+          <h3 className="font-spacegrotesksemibold text-2xl dark:text-white mb-1">
+            Freemium
+          </h3>
+          <p className="font-spacegroteskregular text-sm text-gray-600 dark:text-gray-400">
+            Perfect for getting started
+          </p>
+        </div>
+
+        {/* Price */}
+        <div className="mb-5">
+          <div className="flex items-baseline gap-1">
+            <span className="font-spacegrotesksemibold text-4xl dark:text-white">₹0</span>
+            <span className="font-spacegroteskregular text-sm text-gray-500 dark:text-gray-400">/forever</span>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="flex-grow mb-5">
+          <div className="space-y-2.5">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-gray-700 dark:text-gray-300">5 practice sessions per week</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-gray-700 dark:text-gray-300">Basic phonics training</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-gray-700 dark:text-gray-300">Simple progress tracking</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-gray-700 dark:text-gray-300">Community resources & articles</span>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Button */}
+        <button 
+          onClick={getstarted}
+          className="w-full py-3 bg-gray-800 dark:bg-gray-700 rounded-lg font-spacegroteskmedium text-white hover:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 text-sm"
+        >
+          Get Started Free
+        </button>
+      </div>
+
+      {/* Premium Plan */}
+      <div className="relative bg-gradient-to-br from-[#2D8CFF] to-[#1a5bb8] rounded-2xl p-6 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex flex-col h-full">
+        {/* Popular Badge */}
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+          <div className="bg-[#89D85D] text-black px-4 py-1 rounded-full font-spacegroteskmedium text-xs shadow-lg">
+            Most Popular
+          </div>
+        </div>
+
+        {/* Header */}
+        <div className="mb-4 mt-2">
+          <h3 className="font-spacegrotesksemibold text-2xl text-white mb-1">
+            Premium
+          </h3>
+          <p className="font-spacegroteskregular text-sm text-white text-opacity-90">
+            Unlock your full potential
+          </p>
+        </div>
+
+        {/* Price */}
+        <div className="mb-5">
+          <div className="flex items-baseline gap-1">
+            <span className="font-spacegrotesksemibold text-4xl text-white">₹499</span>
+            <span className="font-spacegroteskregular text-sm text-white text-opacity-80">/month</span>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="flex-grow mb-5">
+          <div className="bg-white bg-opacity-10 rounded-lg px-3 py-2 mb-3">
+            <p className="font-spacegroteskmedium text-white text-xs">Everything in Free, plus:</p>
+          </div>
+          
+          <div className="space-y-2.5">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-[#89D85D] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-white">Unlimited practice sessions</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-[#89D85D] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-white">Advanced 3D animations</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-[#89D85D] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-white">Real-time speech analysis</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-[#89D85D] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-white">Personalized learning paths</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-[#89D85D] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-white">Weekly reports & certificates</span>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-[#89D85D] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-spacegroteskregular text-sm text-white">Priority support</span>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Button */}
+        <button 
+          onClick={getstarted}
+          className="w-full py-3 bg-[#89D85D] rounded-lg font-spacegroteskmedium text-black hover:bg-[#7bc34d] transition-all duration-200 shadow-lg text-sm"
+        >
+          Upgrade to Premium →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
       <div>
         <div className="bg-[#F3F3F3] dark:bg-gray-800 lg:my-32 md:my-32 my-10 mx-4 md:mx-32 rounded-3xl">
           <div className="grid lg:grid-cols-2">
@@ -342,7 +504,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div>
+      <div id="contact">
         <div className="flex items-center justify-center lg:block">
           <div className="border-y-4 p-1 lg:mt-36 md:mt-32 sm:mt-14 mt-16 font-spacegrotesksemibold border-black dark:border-white font-medium lg:text-4xl md:text-3xl sm:text-2xl text-2xl w-fit lg:ml-20 text-center dark:text-white">
             Contact Us
@@ -434,6 +596,8 @@ export default function Home() {
         onClose={() => setIsAuthModalOpen(false)}
         mode="signup"
       />
+
+      
     </div>
   );
 }

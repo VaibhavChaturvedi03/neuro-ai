@@ -1,5 +1,11 @@
 import { RunAnywhere } from "@runanywhere/core";
-import { Audio } from "expo-av";
+import { 
+  AudioRecorder,
+  AndroidAudioEncoder,
+  AndroidOutputFormat,
+  IOSAudioQuality,
+  IOSOutputFormat,
+} from 'expo-audio';
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 import runtimeManager from "./runtime";
@@ -16,17 +22,6 @@ class SpeechRecognitionService {
         console.log('Initializing speech recognition service...');
         await runtimeManager.initialize();
 
-        const { status } = await Audio.requestPermissionsAsync();
-        if (status !== "granted") {
-            throw new Error("Microphone permission not granted");
-        }
-
-        await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: false,
-        });
-
         this.initialized = true;
         console.log("✅ Speech recognition initialized");
     }
@@ -35,36 +30,34 @@ class SpeechRecognitionService {
         await this.initialize();
 
         try {
-            console.log('Preparing audio recording...');
-            const recording = new Audio.Recording();
+            console.log('Starting recording with expo-audio...');
             
-            // Configure to record as WAV (16kHz, mono) for Whisper compatibility
-            const recordingOptions = {
+            // Request permissions
+            const { granted } = await AudioRecorder.requestPermissionsAsync();
+            if (!granted) {
+                throw new Error('Microphone permission not granted');
+            }
+
+            // Create recorder with high quality settings
+            const recording = new AudioRecorder({
                 android: {
                     extension: '.wav',
-                    outputFormat: Audio.AndroidOutputFormat.DEFAULT,
-                    audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
+                    outputFormat: AndroidOutputFormat.DEFAULT,
+                    audioEncoder: AndroidAudioEncoder.DEFAULT,
                     sampleRate: 16000,
                     numberOfChannels: 1,
                     bitRate: 128000,
                 },
                 ios: {
                     extension: '.wav',
-                    audioQuality: Audio.IOSAudioQuality.HIGH,
+                    audioQuality: IOSAudioQuality.HIGH,
                     sampleRate: 16000,
                     numberOfChannels: 1,
                     bitRate: 128000,
-                    linearPCMBitDepth: 16,
-                    linearPCMIsBigEndian: false,
-                    linearPCMIsFloat: false,
                 },
-                web: {
-                    mimeType: 'audio/wav',
-                    bitsPerSecond: 128000,
-                },
-            };
+            });
 
-            await recording.prepareToRecordAsync(recordingOptions);
+            await recording.prepareAsync();
             await recording.startAsync();
             
             this.recording = recording;
@@ -83,8 +76,9 @@ class SpeechRecognitionService {
 
         try {
             console.log('Stopping recording...');
-            await this.recording.stopAndUnloadAsync();
-            const uri = this.recording.getURI();
+            
+            await this.recording.stopAsync();
+            const uri = await this.recording.getURI();
             
             console.log("Audio URI:", uri);
 
@@ -96,27 +90,20 @@ class SpeechRecognitionService {
                 throw new Error("Recording file does not exist");
             }
 
-            if (fileInfo.size === 0) {
-                throw new Error("Recording file is empty");
+            if (fileInfo.size === 0 || fileInfo.size < 1000) {
+                throw new Error("Recording file is too small or empty");
             }
 
-            // Convert URI to proper path format
-            let filePath = uri;
-            if (Platform.OS === 'android') {
-                // Android needs absolute path without file:// prefix
-                filePath = uri.replace('file://', '');
-            }
-
-            console.log("Transcribing file:", filePath);
+            console.log("Transcribing file:", uri);
             console.log("File size:", fileInfo.size, "bytes");
 
             // Transcribe using RunAnywhere
-            const result = await RunAnywhere.transcribeFile(filePath, {
+            const result = await RunAnywhere.transcribeFile(uri, {
                 language: "en",
             });
 
             console.log("✅ Transcription result:", result.text);
-            console.log("Confidence:", result.confidence);
+            console.log("Confidence:", result.confidence || 'N/A');
 
             this.recording = null;
             
@@ -134,7 +121,7 @@ class SpeechRecognitionService {
     cleanup() {
         if (this.recording) {
             try {
-                this.recording.stopAndUnloadAsync();
+                this.recording.stopAsync();
                 this.recording = null;
                 console.log('Recording cleaned up');
             } catch (error) {
@@ -143,5 +130,7 @@ class SpeechRecognitionService {
         }
     }
 }
+
+
 
 export default new SpeechRecognitionService();

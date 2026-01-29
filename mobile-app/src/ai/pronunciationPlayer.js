@@ -1,22 +1,15 @@
-import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
 import runtimeManager from "./runtime";
 
 class PronunciationPlayerService {
     constructor() {
         this.initialized = false;
-        this.currentSound = null;
     }
 
     async initialize() {
         if (this.initialized) return;
 
         await runtimeManager.initialize();
-
-        await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
-        });
 
         this.initialized = true;
         console.log("TTS initialized");
@@ -55,16 +48,13 @@ class PronunciationPlayerService {
             if (isSpeaking) {
                 await Speech.stop();
             }
-            
-            if (this.currentSound) {
-                await this.currentSound.stopAsync();
-                await this.currentSound.unloadAsync();
-                this.currentSound = null;
-            }
         } catch (error) {
             console.error("Error cleaning up sound:", error);
         }
     }
 }
 
+
+            
+  
 export default new PronunciationPlayerService();

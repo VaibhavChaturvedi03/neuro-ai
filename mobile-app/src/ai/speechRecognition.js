@@ -1,13 +1,5 @@
 import { RunAnywhere } from "@runanywhere/core";
-import { 
-  AudioRecorder,
-  AndroidAudioEncoder,
-  AndroidOutputFormat,
-  IOSAudioQuality,
-  IOSOutputFormat,
-} from 'expo-audio';
-import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
+import { Audio } from "expo-av";
 import runtimeManager from "./runtime";
 
 class SpeechRecognitionService {
@@ -19,8 +11,18 @@ class SpeechRecognitionService {
     async initialize() {
         if (this.initialized) return;
 
-        console.log('Initializing speech recognition service...');
+        console.log('Initializing speech recognition...');
         await runtimeManager.initialize();
+
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== "granted") {
+            throw new Error("Microphone permission not granted");
+        }
+
+        await Audio.setAudioModeAsync({
+            allowsRecordingIOS: true,
+            playsInSilentModeIOS: true,
+        });
 
         this.initialized = true;
         console.log("✅ Speech recognition initialized");
@@ -30,38 +32,14 @@ class SpeechRecognitionService {
         await this.initialize();
 
         try {
-            console.log('Starting recording with expo-audio...');
-            
-            // Request permissions
-            const { granted } = await AudioRecorder.requestPermissionsAsync();
-            if (!granted) {
-                throw new Error('Microphone permission not granted');
-            }
-
-            // Create recorder with high quality settings
-            const recording = new AudioRecorder({
-                android: {
-                    extension: '.wav',
-                    outputFormat: AndroidOutputFormat.DEFAULT,
-                    audioEncoder: AndroidAudioEncoder.DEFAULT,
-                    sampleRate: 16000,
-                    numberOfChannels: 1,
-                    bitRate: 128000,
-                },
-                ios: {
-                    extension: '.wav',
-                    audioQuality: IOSAudioQuality.HIGH,
-                    sampleRate: 16000,
-                    numberOfChannels: 1,
-                    bitRate: 128000,
-                },
-            });
-
-            await recording.prepareAsync();
+            const recording = new Audio.Recording();
+            await recording.prepareToRecordAsync(
+                Audio.RecordingOptionsPresets.HIGH_QUALITY
+            );
             await recording.startAsync();
-            
+
             this.recording = recording;
-            console.log("✅ Recording started successfully");
+            console.log("✅ Recording started");
             return recording;
         } catch (error) {
             console.error("❌ Failed to start recording:", error);
@@ -76,43 +54,22 @@ class SpeechRecognitionService {
 
         try {
             console.log('Stopping recording...');
-            
-            await this.recording.stopAsync();
-            const uri = await this.recording.getURI();
-            
-            console.log("Audio URI:", uri);
+            await this.recording.stopAndUnloadAsync();
+            const uri = this.recording.getURI();
 
-            // Check if file exists
-            const fileInfo = await FileSystem.getInfoAsync(uri);
-            console.log("File info:", fileInfo);
-
-            if (!fileInfo.exists) {
-                throw new Error("Recording file does not exist");
-            }
-
-            if (fileInfo.size === 0 || fileInfo.size < 1000) {
-                throw new Error("Recording file is too small or empty");
-            }
-
-            console.log("Transcribing file:", uri);
-            console.log("File size:", fileInfo.size, "bytes");
+            console.log("Recording URI:", uri);
 
             // Transcribe using RunAnywhere
             const result = await RunAnywhere.transcribeFile(uri, {
                 language: "en",
             });
 
-            console.log("✅ Transcription result:", result.text);
-            console.log("Confidence:", result.confidence || 'N/A');
+            console.log("✅ Transcription:", result.text);
 
             this.recording = null;
-            
-            const cleanedText = result.text.toLowerCase().trim();
-            return cleanedText;
+            return result.text.toLowerCase().trim();
         } catch (error) {
-            console.error("❌ Failed to transcribe:", error);
-            console.error("Error type:", error.constructor.name);
-            console.error("Error message:", error.message);
+            console.error("❌ Transcription failed:", error);
             this.recording = null;
             throw error;
         }
@@ -121,15 +78,15 @@ class SpeechRecognitionService {
     cleanup() {
         if (this.recording) {
             try {
-                this.recording.stopAsync();
+                this.recording.stopAndUnloadAsync();
                 this.recording = null;
-                console.log('Recording cleaned up');
             } catch (error) {
-                console.error("Error cleaning up recording:", error);
+                console.error("Error cleaning up:", error);
             }
         }
     }
 }
+
 
 
 

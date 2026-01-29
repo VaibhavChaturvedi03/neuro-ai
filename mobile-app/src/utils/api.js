@@ -63,39 +63,25 @@ export const testWord = async (letter) => {
 // Record audio and analyze with AI
 export const recordAudio = async (expectedWord, targetPhonemes = []) => {
   try {
-    console.log('=== STARTING AUDIO RECORDING ===');
-    console.log('Expected word:', expectedWord);
-    console.log('Target phonemes:', targetPhonemes);
+    console.log('=== RECORDING FOR:', expectedWord, '===');
     
     if (!expectedWord) {
       throw new Error('Expected word is required');
     }
 
-    let transcription = '';
+    // Start recording
+    await speechRecognition.startRecording();
+    console.log('Recording... (3 seconds)');
+    
+    // Wait 3 seconds
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Stop and transcribe
+    console.log('Stopping and transcribing...');
+    const transcription = await speechRecognition.stopRecordingAndTranscribe();
+    console.log('✅ Transcription:', transcription);
 
-    try {
-      console.log('Initializing speech recognition...');
-      // Start recording
-      await speechRecognition.startRecording();
-      console.log('Recording started, waiting 3 seconds...');
-      
-      // Wait for 3 seconds
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      console.log('Stopping recording and transcribing...');
-      // Stop and transcribe
-      transcription = await speechRecognition.stopRecordingAndTranscribe();
-      console.log('✅ Transcription successful:', transcription);
-    } catch (error) {
-      console.error('❌ Transcription failed:', error);
-      console.error('Error details:', error.message);
-      
-      // Don't throw - use fallback for analysis
-      console.warn('Using expected word as fallback for analysis');
-      transcription = expectedWord.toLowerCase();
-    }
-
-    // Always analyze with AI
+    // Analyze with AI
     console.log('Analyzing with AI...');
     const analysisResult = await phonemeAnalyzer.analyzePhonemes(
       transcription,
@@ -103,7 +89,7 @@ export const recordAudio = async (expectedWord, targetPhonemes = []) => {
       targetPhonemes
     );
 
-    console.log('✅ Analysis complete:', analysisResult);
+    console.log('✅ Analysis complete');
 
     return {
       transcription: analysisResult.transcription,
@@ -112,16 +98,8 @@ export const recordAudio = async (expectedWord, targetPhonemes = []) => {
       timestamp: analysisResult.timestamp,
     };
   } catch (error) {
-    console.error('❌ Error in recordAudio:', error);
-    console.error('Full error:', error.stack);
-    
-    // Return fallback result to keep app functioning
-    return {
-      transcription: expectedWord.toLowerCase(),
-      percentage: 50,
-      feedback: `Could not process recording. Try saying "${expectedWord}" clearly. Make sure you're in a quiet environment.`,
-      timestamp: new Date().toISOString(),
-    };
+    console.error('❌ Recording error:', error);
+    throw error;
   }
 };
 

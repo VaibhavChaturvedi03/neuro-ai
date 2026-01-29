@@ -79,15 +79,17 @@ const CourseTestScreen = () => {
 
     setRecording(true);
     try {
-      console.log('Recording for word:', word);
+      console.log('=== STARTING COURSE TEST FOR:', word, '===');
       const data = await recordAudio(word, [letter]);
-      console.log('Received data:', data);
+      console.log('✅ Test complete:', data);
       setAttempts((prev) => [...prev, data.percentage]);
     } catch (error) {
-      console.error('Error recording:', error);
-      // Add fallback attempt
-      setAttempts((prev) => [...prev, 50]);
-      Alert.alert('Notice', 'Recording analysis unavailable. Added estimated score.');
+      console.error('❌ Recording error:', error);
+      Alert.alert(
+        'Recording Failed',
+        'Could not process your recording. Please try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setTimeout(() => {
         setRecording(false);

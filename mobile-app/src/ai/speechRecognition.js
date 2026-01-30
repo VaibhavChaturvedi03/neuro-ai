@@ -1,5 +1,7 @@
 import { RunAnywhere } from "@runanywhere/core";
 import { Audio } from "expo-av";
+import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
 import runtimeManager from "./runtime";
 
 class SpeechRecognitionService {
@@ -35,32 +37,10 @@ class SpeechRecognitionService {
         try {
             const recording = new Audio.Recording();
             
-            // Configure for WAV format compatible with Whisper
-            await recording.prepareToRecordAsync({
-                android: {
-                    extension: '.wav',
-                    outputFormat: Audio.AndroidOutputFormat.DEFAULT,
-                    audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
-                    sampleRate: 16000,
-                    numberOfChannels: 1,
-                    bitRate: 128000,
-                },
-                ios: {
-                    extension: '.wav',
-                    outputFormat: Audio.IOSOutputFormat.LINEARPCM,
-                    audioQuality: Audio.IOSAudioQuality.HIGH,
-                    sampleRate: 16000,
-                    numberOfChannels: 1,
-                    bitRate: 128000,
-                    linearPCMBitDepth: 16,
-                    linearPCMIsBigEndian: false,
-                    linearPCMIsFloat: false,
-                },
-                web: {
-                    mimeType: 'audio/wav',
-                    bitsPerSecond: 128000,
-                },
-            });
+            // Use HIGH_QUALITY preset - simpler and more reliable
+            await recording.prepareToRecordAsync(
+                Audio.RecordingOptionsPresets.HIGH_QUALITY
+            );
             
             await recording.startAsync();
             this.recording = recording;
@@ -84,17 +64,29 @@ class SpeechRecognitionService {
 
             console.log("Recording URI:", uri);
 
-            // Transcribe using RunAnywhere
-            const result = await RunAnywhere.transcribeFile(uri, {
-                language: "en",
+            // Convert URI to absolute path for Android
+            let audioPath = uri;
+            if (Platform.OS === 'android') {
+                // Remove file:// prefix for Android
+                audioPath = uri.replace('file://', '');
+            }
+
+            console.log("Audio path for transcription:", audioPath);
+
+            // Transcribe using RunAnywhere with simple options
+            const result = await RunAnywhere.transcribeFile(audioPath, {
+                language: 'en',
             });
 
             console.log("✅ Transcription:", result.text);
+            console.log("Confidence:", result.confidence);
+            console.log("Duration:", result.duration, "seconds");
 
             this.recording = null;
             return result.text.toLowerCase().trim();
         } catch (error) {
             console.error("❌ Transcription failed:", error);
+            console.error("Error details:", error.message);
             this.recording = null;
             throw error;
         }
@@ -111,5 +103,7 @@ class SpeechRecognitionService {
         }
     }
 }
+
+
 
 export default new SpeechRecognitionService();

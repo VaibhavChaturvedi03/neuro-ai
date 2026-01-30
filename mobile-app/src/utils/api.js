@@ -69,6 +69,17 @@ export const recordAudio = async (expectedWord, targetPhonemes = []) => {
       throw new Error('Expected word is required');
     }
 
+    // Verify Whisper model is loaded
+    console.log('Checking Whisper model...');
+    const { RunAnywhere } = await import('@runanywhere/core');
+    const modelInfo = await RunAnywhere.getModelInfo('whisper-tiny-en');
+    
+    if (!modelInfo || !modelInfo.localPath) {
+      throw new Error('Whisper model not loaded. Please restart the app.');
+    }
+
+    console.log('Whisper model ready at:', modelInfo.localPath);
+
     // Start recording
     await speechRecognition.startRecording();
     console.log('Recording... (3 seconds)');

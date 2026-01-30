@@ -80,37 +80,19 @@ export const recordAudio = async (expectedWord, targetPhonemes = []) => {
 
     console.log('Whisper model ready at:', modelInfo.localPath);
 
-    let transcription = '';
-    let transcriptionSucceeded = false;
+    // Start recording
+    await speechRecognition.startRecording();
+    console.log('Recording... (3 seconds)');
     
-    try {
-      await speechRecognition.startRecording();
-      console.log('Recording... (3 seconds)');
-      
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      console.log('Stopping and transcribing...');
-      transcription = await speechRecognition.stopRecordingAndTranscribe();
-      transcriptionSucceeded = true;
-      console.log('✅ Transcription:', transcription);
-    } catch (transcriptionError) {
-      console.error('❌ Transcription error:', transcriptionError.message);
-      transcriptionSucceeded = false;
-      transcription = '';
-    }
+    // Wait 3 seconds for recording
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Stop and transcribe
+    console.log('Stopping and transcribing...');
+    const transcription = await speechRecognition.stopRecordingAndTranscribe();
+    console.log('✅ Transcription:', transcription);
 
-    // If transcription failed, return honest feedback
-    if (!transcriptionSucceeded) {
-      return {
-        transcription: '(audio not captured)',
-        percentage: 0,
-        feedback: `⚠️ We couldn't process your recording. This is a known issue with audio format compatibility.\n\nPlease try:\n1. Speaking clearly into the microphone\n2. Ensuring you're in a quiet environment\n3. Holding the phone closer\n\nThe word was: "${expectedWord}"`,
-        timestamp: new Date().toISOString(),
-        error: true,
-      };
-    }
-
-    // Analyze with AI only if we have real transcription
+    // Analyze with AI
     console.log('Analyzing with AI...');
     const analysisResult = await phonemeAnalyzer.analyzePhonemes(
       transcription,
@@ -155,6 +137,24 @@ Keep response under 80 words, child-friendly language.`;
     return {
       remedy: result.text,
       percentage,
+      phonemes: [phoneme1, phoneme2],
+    };
+  } catch (error) {
+    console.error('Error getting remedy:', error);
+    
+    // Fallback remedy
+    let remedy = '';
+    if (percentage >= 80) {
+      remedy = `Excellent work on ${phoneme1} and ${phoneme2}! You're doing great. Keep practicing daily for 5 minutes to maintain your skills.`;
+    } else if (percentage >= 60) {
+      remedy = `Good progress on ${phoneme1} and ${phoneme2}! Practice these sounds slowly, focusing on mouth positioning. Try 10 repetitions daily.`;
+    } else {
+      remedy = `Let's work on ${phoneme1} and ${phoneme2} together. Break the sounds into smaller parts. Watch your mouth in a mirror while practicing. Be patient with yourself!`;
+    }
+
+    return { remedy, percentage, phonemes: [phoneme1, phoneme2] };
+  }
+};
       phonemes: [phoneme1, phoneme2],
     };
   } catch (error) {

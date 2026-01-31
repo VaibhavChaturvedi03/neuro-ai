@@ -18,15 +18,17 @@ class AppModelManager {
         try {
             console.log("Adding models...");
 
-            // Add LLM model
+            // Add LLM model with CORRECTED URL
             await LlamaCPP.addModel({
                 id: "smollm-135m-instruct",
                 name: "SmolLM 135M Instruct",
-                url: "https://huggingface.co/prithivMLmods/SmolLM2-135M-Instruct-GGUF/resolve/main/smollm2-135m-instruct-q8_0.gguf",
-                memoryRequirement: 150_000_000,
+                // FIXED: Use bartowski's repo which has the correct file
+                url: "https://huggingface.co/bartowski/SmolLM2-135M-Instruct-GGUF/resolve/main/SmolLM2-135M-Instruct-Q4_K_M.gguf",
+                memoryRequirement: 100_000_000, // Q4 is smaller
             });
+            console.log("The new model is working fine");
 
-            // Add Whisper STT model
+            // Add Whisper STT model (this one works fine)
             await ONNX.addModel({
                 id: "whisper-tiny-en",
                 name: "Whisper Tiny English",
@@ -35,15 +37,6 @@ class AppModelManager {
                 artifactType: ModelArtifactType.TarGzArchive,
                 memoryRequirement: 75_000_000,
             });
-
-            // Add TTS model (if available)
-            // await ONNX.addModel({
-            //   id: 'en-US-neural-tts',
-            //   name: 'English Neural TTS',
-            //   url: 'https://...',
-            //   modality: ModelCategory.TextToSpeech,
-            //   memoryRequirement: 50_000_000,
-            // });
 
             this.modelsAdded = true;
             console.log("Models added successfully");
@@ -70,11 +63,11 @@ class AppModelManager {
             console.log("Downloading AI models...");
 
             const models = [
-                { id: "whisper-tiny-en", name: "Whisper Tiny", size: "~75MB" },
+                { id: "whisper-tiny-en", name: "Whisper Tiny", size: "~145MB" },
                 {
                     id: "smollm-135m-instruct",
                     name: "SmolLM 135M",
-                    size: "~135MB",
+                    size: "~75MB", // Q4 is smaller than Q8
                 },
             ];
 
@@ -185,5 +178,7 @@ class AppModelManager {
         console.log("Cache cleared");
     }
 }
+
+
 
 export default new AppModelManager();

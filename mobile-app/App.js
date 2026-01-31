@@ -24,6 +24,7 @@ export default function App() {
     const initializeApp = async () => {
         try {
             console.log('=== Starting App Initialization ===');
+            console.log('Backend URL: https://neuro-ai-3ipn.onrender.com');
             
             // Check if models are already downloaded
             const status = await modelManager.checkModelsStatus();

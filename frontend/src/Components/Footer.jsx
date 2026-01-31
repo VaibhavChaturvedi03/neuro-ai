@@ -1,14 +1,41 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
+    const navigate = useNavigate();
+
+    const handleNavigation = (e, section) => {
+        e.preventDefault();
+        
+        if (section === 'articles') {
+            navigate('/articles');
+        } else {
+            // Navigate to home page first if not already there
+            if (window.location.pathname !== '/') {
+                navigate('/');
+                // Wait for navigation to complete, then scroll
+                setTimeout(() => {
+                    const element = document.getElementById(section);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+            } else {
+                // Already on home page, just scroll
+                const element = document.getElementById(section);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+    };
 
     const quickAccess = [
-        { label: 'Features', href: '/', state: { scrollToFeatures: true } },
-        { label: 'Pricing', href: '/pricing' },
-        { label: 'Articles', href: '/articles' },
+        { label: 'Features', section: 'features' },
+        { label: 'Pricing', section: 'pricing' },
+        { label: 'Articles', section: 'articles' },
         { label: 'About', href: '/about' },
-        { label: 'Contact Us', href: '/contact' }
+        { label: 'Contact Us', section: 'contact' }
     ];
 
     const externalLinks = [
@@ -48,16 +75,28 @@ const Footer = () => {
                         <ul className="space-y-3">
                             {quickAccess.map((link) => (
                                 <li key={link.label}>
-                                    <Link 
-                                        to={link.href} 
-                                        state={link.state}
-                                        className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white transition-colors duration-200 flex items-center group"
-                                    >
-                                        <svg className="h-3 w-3 mr-2 opacity-50 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                        </svg>
-                                        {link.label}
-                                    </Link>
+                                    {link.section ? (
+                                        <a
+                                            href={`#${link.section}`}
+                                            onClick={(e) => handleNavigation(e, link.section)}
+                                            className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white transition-colors duration-200 flex items-center group cursor-pointer"
+                                        >
+                                            <svg className="h-3 w-3 mr-2 opacity-50 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                            {link.label}
+                                        </a>
+                                    ) : (
+                                        <Link 
+                                            to={link.href}
+                                            className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white transition-colors duration-200 flex items-center group"
+                                        >
+                                            <svg className="h-3 w-3 mr-2 opacity-50 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                            {link.label}
+                                        </Link>
+                                    )}
                                 </li>
                             ))}
                         </ul>

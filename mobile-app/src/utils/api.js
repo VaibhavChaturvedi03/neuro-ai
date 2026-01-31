@@ -1,148 +1,169 @@
-import axios from 'axios';
-import phonemeAnalyzer from '../ai/phonemeAnalyzer';
-import speechRecognition from '../ai/speechRecognition';
-import { API_BASE_URL } from '../constants/theme';
+import phonemeAnalyzer from "../ai/phonemeAnalyzer";
+import speechRecognition from "../ai/speechRecognition";
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const API_BASE_URL = "https://neuro-ai-3ipn.onrender.com/api";
 
-// Local word bank (replaces backend calls)
-const WORD_BANK = {
-  A: { word1: 'Apple', pronunciation: '/ˈæp.əl/', image_link: '🍎' },
-  B: { word1: 'Ball', pronunciation: '/bɔːl/', image_link: '⚽' },
-  V: { word1: 'Violin', pronunciation: '/ˌvaɪ.əˈlɪn/', image_link: '🎻' },
-  P: { word1: 'Pen', pronunciation: '/pen/', image_link: '✏️' },
-  F: { word1: 'Fish', pronunciation: '/fɪʃ/', image_link: '🐟' },
-  T: { word1: 'Tree', pronunciation: '/triː/', image_link: '🌳' },
-  D: { word1: 'Dog', pronunciation: '/dɒɡ/', image_link: '🐕' },
-  S: { word1: 'Sun', pronunciation: '/sʌn/', image_link: '☀️' },
-  L: { word1: 'Lion', pronunciation: '/ˈlaɪ.ən/', image_link: '🦁' },
-  Z: { word1: 'Zebra', pronunciation: '/ˈziː.brə/', image_link: '🦓' },
+// Hardcoded words for each letter with phonetics
+const LETTER_WORDS = {
+    A: { word: "Apple", pronunciation: "/ˈæp.əl/", emoji: "🍎" },
+    B: { word: "Ball", pronunciation: "/bɔːl/", emoji: "⚽" },
+    C: { word: "Cat", pronunciation: "/kæt/", emoji: "🐱" },
+    D: { word: "Dog", pronunciation: "/dɔːɡ/", emoji: "🐕" },
+    E: { word: "Elephant", pronunciation: "/ˈel.ɪ.fənt/", emoji: "🐘" },
+    F: { word: "Fish", pronunciation: "/fɪʃ/", emoji: "🐠" },
+    G: { word: "Goat", pronunciation: "/ɡoʊt/", emoji: "🐐" },
+    H: { word: "Hat", pronunciation: "/hæt/", emoji: "🎩" },
+    I: { word: "Ice", pronunciation: "/aɪs/", emoji: "🧊" },
+    J: { word: "Juice", pronunciation: "/dʒuːs/", emoji: "🧃" },
+    K: { word: "Kite", pronunciation: "/kaɪt/", emoji: "🪁" },
+    L: { word: "Lion", pronunciation: "/ˈlaɪ.ən/", emoji: "🦁" },
+    M: { word: "Moon", pronunciation: "/muːn/", emoji: "🌙" },
+    N: { word: "Nose", pronunciation: "/noʊz/", emoji: "👃" },
+    O: { word: "Orange", pronunciation: "/ˈɔː.rɪndʒ/", emoji: "🍊" },
+    P: { word: "Pen", pronunciation: "/pen/", emoji: "🖊️" },
+    Q: { word: "Queen", pronunciation: "/kwiːn/", emoji: "👑" },
+    R: { word: "Rabbit", pronunciation: "/ˈræb.ɪt/", emoji: "🐰" },
+    S: { word: "Sun", pronunciation: "/sʌn/", emoji: "☀️" },
+    T: { word: "Tree", pronunciation: "/triː/", emoji: "🌳" },
+    U: { word: "Umbrella", pronunciation: "/ʌmˈbrel.ə/", emoji: "☂️" },
+    V: { word: "Van", pronunciation: "/væn/", emoji: "🚐" },
+    W: { word: "Water", pronunciation: "/ˈwɔː.tər/", emoji: "💧" },
+    X: { word: "Xylophone", pronunciation: "/ˈzaɪ.lə.foʊn/", emoji: "🎹" },
+    Y: { word: "Yellow", pronunciation: "/ˈjel.oʊ/", emoji: "💛" },
+    Z: { word: "Zebra", pronunciation: "/ˈziː.brə/", emoji: "🦓" },
 };
 
-// Generate word for a specific letter (on-device)
+// Generate word - now uses hardcoded data
 export const generateWord = async (letter) => {
-  try {
-    // Simulate slight delay for realistic UX
-    await new Promise(resolve => setTimeout(resolve, 100));
+    console.log(`Getting hardcoded word for letter: ${letter}`);
 
-    const wordData = WORD_BANK[letter.toUpperCase()] || WORD_BANK['A'];
-    return wordData;
-  } catch (error) {
-    console.error('Error generating word:', error);
-    throw error;
-  }
+    const letterData = LETTER_WORDS[letter.toUpperCase()];
+
+    if (!letterData) {
+        console.warn(`No word found for letter ${letter}, using Apple`);
+        return {
+            word1: "Apple",
+            pronunciation: "/ˈæp.əl/",
+            image_link: "🍎",
+        };
+    }
+
+    return {
+        word1: letterData.word,
+        pronunciation: letterData.pronunciation,
+        image_link: letterData.emoji,
+    };
 };
 
-// Test word for overall test (on-device)
+// Test word - same as generateWord
 export const testWord = async (letter) => {
-  try {
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    const wordData = WORD_BANK[letter.toUpperCase()] || WORD_BANK['A'];
-    return wordData;
-  } catch (error) {
-    console.error('Error testing word:', error);
-    throw error;
-  }
+    return generateWord(letter);
 };
 
-// Record audio and analyze using RunAnywhere SDK
+// Record audio and analyze with AI
 export const recordAudio = async (expectedWord, targetPhonemes = []) => {
-  try {
-    console.log('Starting recording for word:', expectedWord);
+    try {
+        console.log("=== RECORDING FOR:", expectedWord, "===");
 
-    // Start recording
-    await speechRecognition.startRecording();
+        if (!expectedWord) {
+            throw new Error("Expected word is required");
+        }
 
-    // Wait for user to speak (3 seconds)
-    await new Promise(resolve => setTimeout(resolve, 3000));
+        // Verify Whisper model is loaded
+        console.log("Checking Whisper model...");
+        const { RunAnywhere } = await import("@runanywhere/core");
+        const modelInfo = await RunAnywhere.getModelInfo("whisper-tiny-en");
 
-    // Stop and transcribe
-    const transcription = await speechRecognition.stopRecordingAndTranscribe();
+        if (!modelInfo || !modelInfo.localPath) {
+            throw new Error(
+                "Whisper model not loaded. Please restart the app.",
+            );
+        }
 
-    console.log('Transcribed:', transcription);
+        console.log("Whisper model ready at:", modelInfo.localPath);
 
-    // Analyze phonemes
-    const analysis = await phonemeAnalyzer.analyzePhonemes(
-      transcription,
-      expectedWord,
-      targetPhonemes
-    );
+        // Start recording
+        await speechRecognition.startRecording();
+        console.log("Recording... (3 seconds)");
 
-    return {
-      percentage: analysis.accuracy,
-      transcription: analysis.transcription,
-      feedback: analysis.feedback,
-      timestamp: analysis.timestamp,
-    };
-  } catch (error) {
-    console.error('Error recording audio:', error);
+        // Wait 3 seconds for recording
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    // Fallback: return mock data if AI fails
-    return {
-      percentage: Math.floor(Math.random() * 40) + 60, // 60-100%
-      transcription: 'error',
-      feedback: 'Recording failed. Please try again.',
-      timestamp: new Date().toISOString(),
-    };
-  }
+        // Stop and transcribe
+        console.log("Stopping and transcribing...");
+        const transcription =
+            await speechRecognition.stopRecordingAndTranscribe();
+        console.log("✅ Transcription:", transcription);
+
+        // Analyze with AI
+        console.log("Analyzing with AI...");
+        const analysisResult = await phonemeAnalyzer.analyzePhonemes(
+            transcription,
+            expectedWord,
+            targetPhonemes,
+        );
+
+        console.log("✅ Analysis complete");
+
+        return {
+            transcription: analysisResult.transcription,
+            percentage: analysisResult.accuracy,
+            feedback: analysisResult.feedback,
+            timestamp: analysisResult.timestamp,
+        };
+    } catch (error) {
+        console.error("❌ Recording error:", error);
+        throw error;
+    }
 };
 
-// Get remedy using LLM (on-device)
-export const getRemedy = async (percentage, phoneme1, phoneme2, attempts = []) => {
-  try {
-    // Use LLM to generate personalized remedy
-    const { LlamaCpp } = require('@runanywhere/llamacpp');
+// Get AI remedy
+export const getRemedy = async (
+    percentage,
+    phoneme1,
+    phoneme2,
+    attempts = [],
+) => {
+    try {
+        console.log("Getting AI remedy for:", {
+            percentage,
+            phoneme1,
+            phoneme2,
+        });
 
-    const llm = new LlamaCpp({
-      model: 'smollm-135m-instruct',
-      temperature: 0.7,
-      maxTokens: 200,
-    });
+        const prompt = `You are a speech therapist. A child scored ${percentage}% accuracy on phonemes ${phoneme1} and ${phoneme2}.
 
-    const prompt = `You are a speech therapist helping a child practice phonemes "${phoneme1}" and "${phoneme2}".
-Their average accuracy is ${percentage}%.
-Recent attempts: ${attempts.join('%, ')}%
+Provide:
+1. Brief assessment (20 words max)
+2. 3 specific practice tips
+3. Encouragement
 
-Provide 3 simple, encouraging tips to improve their pronunciation. Keep it child-friendly and under 100 words.`;
+Keep response under 80 words, child-friendly language.`;
 
-    const remedy = await llm.generate(prompt);
+        const { RunAnywhere } = await import("@runanywhere/core");
+        const result = await RunAnywhere.generate(prompt, {
+            maxTokens: 150,
+            temperature: 0.7,
+        });
 
-    return {
-      remedy: remedy.trim(),
-    };
-  } catch (error) {
-    console.error('Error fetching remedy:', error);
+        return {
+            remedy: result.text,
+            percentage,
+            phonemes: [phoneme1, phoneme2],
+        };
+    } catch (error) {
+        console.error("Error getting remedy:", error);
 
-    // Fallback remedies
-    const fallbackRemedies = {
-      low: `Great effort! Here's how to improve:
-1. Practice saying the sounds slowly, one at a time
-2. Watch your mouth in a mirror while speaking
-3. Listen to the correct pronunciation and repeat 3 times
-Keep practicing - you're doing great! 🌟`,
-      medium: `You're doing well! To get even better:
-1. Focus on the difference between the two sounds
-2. Practice with fun tongue twisters
-3. Record yourself and listen back
-You're on the right track! 💪`,
-      high: `Excellent work! To maintain this:
-1. Keep practicing daily for 5 minutes
-2. Try harder words with these sounds
-3. Help others learn these phonemes
-Keep up the amazing work! 🎉`,
-    };
+        // Fallback remedy
+        let remedy = "";
+        if (percentage >= 80) {
+            remedy = `Excellent work on ${phoneme1} and ${phoneme2}! You're doing great. Keep practicing daily for 5 minutes to maintain your skills.`;
+        } else if (percentage >= 60) {
+            remedy = `Good progress on ${phoneme1} and ${phoneme2}! Practice these sounds slowly, focusing on mouth positioning. Try 10 repetitions daily.`;
+        } else {
+            remedy = `Let's work on ${phoneme1} and ${phoneme2} together. Break the sounds into smaller parts. Watch your mouth in a mirror while practicing. Be patient with yourself!`;
+        }
 
-    if (percentage < 60) return { remedy: fallbackRemedies.low };
-    if (percentage < 80) return { remedy: fallbackRemedies.medium };
-    return { remedy: fallbackRemedies.high };
-  }
+        return { remedy, percentage, phonemes: [phoneme1, phoneme2] };
+    }
 };
-
-export default api;

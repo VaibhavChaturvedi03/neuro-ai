@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-
-const baseUrl = "http://localhost:5000";
+import RecommendationsPanel from "../Components/RecommendationsPanel";
+import { API_URL } from "../url/base";
 
 export default function TestDashboard() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [statistics, setStatistics] = useState(null);
   const [allTests, setAllTests] = useState([]);
+  const [recommendations, setRecommendations] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const isPremium = false; // Set to true for premium users
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -25,7 +28,7 @@ export default function TestDashboard() {
       const token = localStorage.getItem('token');
       
       // Fetch statistics
-      const statsResponse = await fetch(`${baseUrl}/api/test/statistics`, {
+      const statsResponse = await fetch(`${API_URL}/api/test/statistics`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -35,13 +38,23 @@ export default function TestDashboard() {
       }
       
       // Fetch all tests
-      const testsResponse = await fetch(`${baseUrl}/api/test/all`, {
+      const testsResponse = await fetch(`${API_URL}/api/test/all`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       if (testsResponse.ok) {
         const testsData = await testsResponse.json();
         setAllTests(testsData.data);
+      }
+
+      // Fetch recommendations
+      const recsResponse = await fetch(`${API_URL}/api/test/recommendations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (recsResponse.ok) {
+        const recsData = await recsResponse.json();
+        setRecommendations(recsData.data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -114,6 +127,39 @@ export default function TestDashboard() {
                 <div className="text-2xl">{statistics.worstLetter.accuracy}% accuracy</div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Recommendations Toggle Button */}
+        {recommendations && recommendations.keyAreasForImprovement && recommendations.keyAreasForImprovement.length > 0 && (
+          <div className="mb-6">
+            <button
+              onClick={() => setShowRecommendations(!showRecommendations)}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎯</span>
+                <div className="text-left">
+                  <div className="text-lg">View Personalized Recommendations</div>
+                  <div className="text-sm opacity-90">AI-powered insights to improve faster</div>
+                </div>
+              </div>
+              <svg 
+                className={`w-6 h-6 transition-transform ${showRecommendations ? 'rotate-180' : ''}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Recommendations Panel */}
+        {showRecommendations && recommendations && (
+          <div className="mb-8">
+            <RecommendationsPanel recommendations={recommendations} isPremium={isPremium} />
           </div>
         )}
 

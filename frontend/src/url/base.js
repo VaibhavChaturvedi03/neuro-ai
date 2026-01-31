@@ -1,0 +1,1 @@
+export const API_URL = 'https://neuro-ai-4.onrender.com'

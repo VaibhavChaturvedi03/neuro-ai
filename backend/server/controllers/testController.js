@@ -1,5 +1,6 @@
 import axios from "axios";
 import TestResult from "../models/TestResult.js";
+import Course from "../models/Course.js";
 
 const PHONEME_API_URL = process.env.PHONEME_API_URL || "http://127.0.0.1:5002";
 
@@ -288,3 +289,189 @@ export const recordAndAnalyze = async (req, res) => {
         });
     }
 };
+
+// @desc    Get personalized course recommendations based on test results
+// @route   GET /api/test/recommendations
+// @access  Private
+export const getCourseRecommendations = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Fetch all user test results
+        const tests = await TestResult.find({ user: userId });
+
+        if (tests.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: "No test data available yet. Complete some tests to get personalized recommendations.",
+                data: {
+                    recommendations: [],
+                    keyAreasForImprovement: [],
+                    overallProgress: 0
+                }
+            });
+        }
+
+        // Calculate overall metrics
+        const totalAccuracy = tests.reduce((sum, t) => sum + t.averageAccuracy, 0);
+        const overallAccuracy = totalAccuracy / tests.length;
+
+        // Identify weak areas (below 70% accuracy)
+        const weakLetters = tests
+            .filter(t => t.attempts.length > 0 && t.averageAccuracy < 70)
+            .sort((a, b) => a.averageAccuracy - b.averageAccuracy)
+            .slice(0, 5);
+
+        // Identify improving areas (progression in attempts)
+        const improvingLetters = tests.filter(t => {
+            if (t.attempts.length < 2) return false;
+            const recent = t.attempts.slice(-2);
+            return recent[1].accuracy > recent[0].accuracy;
+        });
+
+        // Fetch all courses
+        const allCourses = await Course.find({ isActive: true });
+
+        // Match weak letters to relevant courses
+        const recommendedCourses = [];
+        const keyAreasForImprovement = [];
+
+        for (const weakTest of weakLetters) {
+            // Find courses that contain this letter's phoneme
+            const relevantCourses = allCourses.filter(course => {
+                const letter = weakTest.letter.toLowerCase();
+                return (
+                    course.phoneme1.includes(letter) ||
+                    course.phoneme2.includes(letter) ||
+                    course.title.toLowerCase().includes(letter)
+                );
+            });
+
+            keyAreasForImprovement.push({
+                letter: weakTest.letter,
+                word: weakTest.word,
+                currentAccuracy: weakTest.averageAccuracy,
+                attempts: weakTest.attempts.length,
+                trend: getTrend(weakTest.attempts),
+                priority: getPriority(weakTest.averageAccuracy, weakTest.attempts.length),
+                recommendation: getRecommendation(weakTest.averageAccuracy)
+            });
+
+            relevantCourses.forEach(course => {
+                if (!recommendedCourses.find(rc => rc._id.equals(course._id))) {
+                    recommendedCourses.push({
+                        courseId: course._id,
+                        title: course.title,
+                        description: course.description,
+                        phoneme1: course.phoneme1,
+                        phoneme2: course.phoneme2,
+                        difficulty: course.difficulty,
+                        totalLessons: course.totalLessons,
+                        relevantLetters: [weakTest.letter],
+                        matchScore: calculateMatchScore(course, weakTest)
+                    });
+                } else {
+                    const existing = recommendedCourses.find(rc => rc.courseId.equals(course._id));
+                    if (existing && !existing.relevantLetters.includes(weakTest.letter)) {
+                        existing.relevantLetters.push(weakTest.letter);
+                        existing.matchScore += 10;
+                    }
+                }
+            });
+        }
+
+        // Sort recommendations by match score
+        recommendedCourses.sort((a, b) => b.matchScore - a.matchScore);
+
+        // Prepare response
+        const response = {
+            overallProgress: Math.round(overallAccuracy),
+            totalTestsTaken: tests.length,
+            completedTests: tests.filter(t => t.completed).length,
+            keyAreasForImprovement: keyAreasForImprovement.slice(0, 5),
+            recommendedCourses: recommendedCourses.slice(0, 6),
+            strengthAreas: tests
+                .filter(t => t.attempts.length > 0 && t.averageAccuracy >= 80)
+                .sort((a, b) => b.averageAccuracy - a.averageAccuracy)
+                .slice(0, 3)
+                .map(t => ({
+                    letter: t.letter,
+                    word: t.word,
+                    accuracy: t.averageAccuracy
+                })),
+            improvingAreas: improvingLetters.map(t => ({
+                letter: t.letter,
+                word: t.word,
+                improvement: calculateImprovement(t.attempts)
+            })).slice(0, 3)
+        };
+
+        res.status(200).json({
+            success: true,
+            data: response
+        });
+    } catch (error) {
+        console.error("Error generating recommendations:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to generate recommendations",
+            error: error.message
+        });
+    }
+};
+
+// Helper functions
+function getTrend(attempts) {
+    if (attempts.length < 2) return 'insufficient_data';
+    const recent = attempts.slice(-3);
+    if (recent.length < 2) return 'stable';
+    
+    const first = recent[0].accuracy;
+    const last = recent[recent.length - 1].accuracy;
+    const diff = last - first;
+    
+    if (diff > 10) return 'improving';
+    if (diff < -10) return 'declining';
+    return 'stable';
+}
+
+function getPriority(accuracy, attemptCount) {
+    if (accuracy < 50) return 'high';
+    if (accuracy < 70 && attemptCount >= 3) return 'high';
+    if (accuracy < 70) return 'medium';
+    return 'low';
+}
+
+function getRecommendation(accuracy) {
+    if (accuracy < 40) {
+        return "Focus on this sound immediately. Practice daily with guided exercises.";
+    } else if (accuracy < 60) {
+        return "Needs significant improvement. Regular practice recommended.";
+    } else if (accuracy < 75) {
+        return "Good progress! Continue practicing to strengthen this skill.";
+    } else {
+        return "Minor improvements needed. Review occasionally to maintain proficiency.";
+    }
+}
+
+function calculateMatchScore(course, weakTest) {
+    let score = 50; // Base score
+    
+    // Higher score for exact phoneme match
+    const letter = weakTest.letter.toLowerCase();
+    if (course.phoneme1.includes(letter)) score += 30;
+    if (course.phoneme2.includes(letter)) score += 30;
+    
+    // Adjust for difficulty vs accuracy
+    if (weakTest.averageAccuracy < 50 && course.difficulty === 'beginner') score += 20;
+    if (weakTest.averageAccuracy >= 50 && weakTest.averageAccuracy < 70 && course.difficulty === 'intermediate') score += 15;
+    
+    return score;
+}
+
+function calculateImprovement(attempts) {
+    if (attempts.length < 2) return 0;
+    const first = attempts[0].accuracy;
+    const last = attempts[attempts.length - 1].accuracy;
+    return Math.round((last - first) * 10) / 10;
+}

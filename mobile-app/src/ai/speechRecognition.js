@@ -1,26 +1,45 @@
 import { RunAnywhere } from "@runanywhere/core";
-import { 
-  AudioRecorder,
-  AndroidAudioEncoder,
-  AndroidOutputFormat,
-  IOSAudioQuality,
-  IOSOutputFormat,
-} from 'expo-audio';
-import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
-import runtimeManager from "./runtime";
+import * as FileSystem from "expo-file-system/legacy";
+import { PermissionsAndroid, Platform } from "react-native";
+import AudioRecorderPlayer from "react-native-nitro-sound";
+import runtimeManager from "./runtime.js";
 
 class SpeechRecognitionService {
     constructor() {
-        this.recording = null;
+        this.audioRecorderPlayer = new AudioRecorderPlayer();
         this.initialized = false;
+        this.isRecording = false;
+        this.recordPath = null;
     }
 
     async initialize() {
         if (this.initialized) return;
 
-        console.log('Initializing speech recognition service...');
+        console.log("Initializing speech recognition...");
         await runtimeManager.initialize();
+
+        // Request permissions on Android
+        if (Platform.OS === "android") {
+            try {
+                const grants = await PermissionsAndroid.requestMultiple([
+                    PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+                    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                    PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+                ]);
+
+                if (
+                    grants["android.permission.RECORD_AUDIO"] !==
+                    PermissionsAndroid.RESULTS.GRANTED
+                ) {
+                    throw new Error("Microphone permission not granted");
+                }
+
+                console.log("✅ Permissions granted");
+            } catch (err) {
+                console.error("Permission error:", err);
+                throw new Error("Failed to get permissions");
+            }
+        }
 
         this.initialized = true;
         console.log("✅ Speech recognition initialized");
@@ -30,107 +49,169 @@ class SpeechRecognitionService {
         await this.initialize();
 
         try {
-            console.log('Starting recording with expo-audio...');
-            
-            // Request permissions
-            const { granted } = await AudioRecorder.requestPermissionsAsync();
-            if (!granted) {
-                throw new Error('Microphone permission not granted');
+            // Stop any existing recording
+            if (this.isRecording) {
+                try {
+                    await this.audioRecorderPlayer.stopRecorder();
+                } catch (e) {}
+                this.isRecording = false;
             }
 
-            // Create recorder with high quality settings
-            const recording = new AudioRecorder({
-                android: {
-                    extension: '.wav',
-                    outputFormat: AndroidOutputFormat.DEFAULT,
-                    audioEncoder: AndroidAudioEncoder.DEFAULT,
-                    sampleRate: 16000,
-                    numberOfChannels: 1,
-                    bitRate: 128000,
-                },
-                ios: {
-                    extension: '.wav',
-                    audioQuality: IOSAudioQuality.HIGH,
-                    sampleRate: 16000,
-                    numberOfChannels: 1,
-                    bitRate: 128000,
-                },
+            // Generate unique filename with .wav extension
+            const timestamp = Date.now();
+            const fileName = `recording_${timestamp}.wav`;
+
+            // Set path based on platform
+            if (Platform.OS === "android") {
+                this.recordPath = `${FileSystem.cacheDirectory}${fileName}`;
+            } else {
+                this.recordPath = `${FileSystem.cacheDirectory}${fileName}`;
+            }
+
+            // Remove file:// prefix for the recorder
+            const recorderPath = this.recordPath.replace("file://", "");
+
+            console.log("Starting recording to:", recorderPath);
+
+            // Configure audio recorder for WAV format (16kHz, mono - Whisper compatible)
+            const audioSet = {
+                // Android settings
+                AudioEncoderAndroid: 1, // DEFAULT encoder
+                AudioSourceAndroid: 1, // MIC
+                OutputFormatAndroid: 2, // MPEG_4 (will be converted)
+                // iOS settings
+                AVEncoderAudioQualityKeyIOS: 127, // max quality
+                AVNumberOfChannelsKeyIOS: 1, // mono
+                AVSampleRateKeyIOS: 16000, // 16kHz for Whisper
+                AVFormatIDKeyIOS: "lpcm", // Linear PCM for WAV
+                AVLinearPCMBitDepthKeyIOS: 16,
+                AVLinearPCMIsBigEndianKeyIOS: false,
+                AVLinearPCMIsFloatKeyIOS: false,
+            };
+
+            // Start recording
+            const uri = await this.audioRecorderPlayer.startRecorder(
+                recorderPath,
+                audioSet,
+                true, // Enable metering
+            );
+
+            this.isRecording = true;
+            console.log("✅ Recording started:", uri);
+
+            // Add recording listener for metering (optional)
+            this.audioRecorderPlayer.addRecordBackListener((e) => {
+                // Can use e.currentPosition for duration
+                return;
             });
 
-            await recording.prepareAsync();
-            await recording.startAsync();
-            
-            this.recording = recording;
-            console.log("✅ Recording started successfully");
-            return recording;
+            return uri;
         } catch (error) {
             console.error("❌ Failed to start recording:", error);
+            this.isRecording = false;
             throw error;
         }
     }
 
     async stopRecordingAndTranscribe() {
-        if (!this.recording) {
+        if (!this.isRecording) {
             throw new Error("No active recording");
         }
 
         try {
-            console.log('Stopping recording...');
-            
-            await this.recording.stopAsync();
-            const uri = await this.recording.getURI();
-            
-            console.log("Audio URI:", uri);
+            console.log("Stopping recording...");
+
+            // Stop the recorder
+            const result = await this.audioRecorderPlayer.stopRecorder();
+            this.audioRecorderPlayer.removeRecordBackListener();
+            this.isRecording = false;
+
+            console.log("Recording stopped:", result);
+
+            // Get the file path
+            let audioPath = result || this.recordPath;
+
+            // Ensure we have a valid path
+            if (!audioPath) {
+                throw new Error("No recording path available");
+            }
 
             // Check if file exists
-            const fileInfo = await FileSystem.getInfoAsync(uri);
+            const fileUri = audioPath.startsWith("file://")
+                ? audioPath
+                : `file://${audioPath}`;
+            const fileInfo = await FileSystem.getInfoAsync(fileUri);
+
             console.log("File info:", fileInfo);
 
             if (!fileInfo.exists) {
                 throw new Error("Recording file does not exist");
             }
 
-            if (fileInfo.size === 0 || fileInfo.size < 1000) {
-                throw new Error("Recording file is too small or empty");
+            if (fileInfo.size < 1000) {
+                throw new Error("Recording file is too small");
             }
 
-            console.log("Transcribing file:", uri);
             console.log("File size:", fileInfo.size, "bytes");
 
-            // Transcribe using RunAnywhere
-            const result = await RunAnywhere.transcribeFile(uri, {
-                language: "en",
-            });
+            // Prepare path for RunAnywhere transcription
+            // RunAnywhere expects absolute path without file:// on Android
+            let transcribePath = audioPath;
+            if (Platform.OS === "android") {
+                transcribePath = audioPath.replace("file://", "");
+            }
 
-            console.log("✅ Transcription result:", result.text);
-            console.log("Confidence:", result.confidence || 'N/A');
+            console.log("Transcribing with path:", transcribePath);
 
-            this.recording = null;
-            
-            const cleanedText = result.text.toLowerCase().trim();
-            return cleanedText;
+            // Transcribe using RunAnywhere Whisper
+            const transcriptionResult = await RunAnywhere.transcribeFile(
+                transcribePath,
+                {
+                    language: "en",
+                },
+            );
+
+            console.log("✅ Transcription result:", transcriptionResult);
+            console.log("Text:", transcriptionResult.text);
+            console.log("Confidence:", transcriptionResult.confidence);
+
+            // Clean up the temp file
+            try {
+                await FileSystem.deleteAsync(fileUri, { idempotent: true });
+            } catch (e) {
+                console.log("Could not delete temp file:", e);
+            }
+
+            return transcriptionResult.text.toLowerCase().trim();
         } catch (error) {
-            console.error("❌ Failed to transcribe:", error);
-            console.error("Error type:", error.constructor.name);
-            console.error("Error message:", error.message);
-            this.recording = null;
+            console.error("❌ Transcription failed:", error);
+            this.isRecording = false;
+
+            // Clean up on error
+            if (this.recordPath) {
+                try {
+                    const fileUri = this.recordPath.startsWith("file://")
+                        ? this.recordPath
+                        : `file://${this.recordPath}`;
+                    await FileSystem.deleteAsync(fileUri, { idempotent: true });
+                } catch (e) {}
+            }
+
             throw error;
         }
     }
 
-    cleanup() {
-        if (this.recording) {
-            try {
-                this.recording.stopAsync();
-                this.recording = null;
-                console.log('Recording cleaned up');
-            } catch (error) {
-                console.error("Error cleaning up recording:", error);
+    async cleanup() {
+        try {
+            if (this.isRecording) {
+                await this.audioRecorderPlayer.stopRecorder();
+                this.audioRecorderPlayer.removeRecordBackListener();
+                this.isRecording = false;
             }
+        } catch (error) {
+            console.error("Error cleaning up:", error);
         }
     }
 }
-
-
 
 export default new SpeechRecognitionService();

@@ -35,35 +35,33 @@ class PhonemeAnalyzerService {
             console.log('=== AI ANALYSIS ===');
             console.log('Input:', { transcription, expectedWord, targetPhonemes });
 
+            // Calculate accuracy based on actual transcription
+            const calculatedAccuracy = this.calculateSimpleAccuracy(transcription, expectedWord);
+            
             const prompt = `You are a friendly speech therapist analyzing a child's pronunciation.
 
 Expected word: "${expectedWord}"
 What they said: "${transcription}"
-Target phonemes: ${targetPhonemes.join(", ")}
+Calculated accuracy: ${calculatedAccuracy}%
 
-Provide brief, encouraging feedback:
-1. Start with accuracy percentage (e.g., "95% accurate!")
-2. Highlight what they did well
-3. Give one simple tip if needed
+Provide brief, encouraging feedback in 2-3 sentences:
+- If accuracy >= 90%: Praise their excellent pronunciation
+- If accuracy >= 70%: Encourage them, mention what was good
+- If accuracy >= 50%: Gently correct, give one specific tip
+- If accuracy < 50%: Be very encouraging, break down the word
 
-Keep response under 60 words, warm and supportive tone.`;
+Keep response under 50 words. Be warm and child-friendly.`;
 
             const result = await RunAnywhere.generate(prompt, {
-                maxTokens: 120,
+                maxTokens: 80,
                 temperature: 0.5,
             });
 
             const response = result.text;
             console.log('AI Response:', response);
-            
-            // Extract accuracy from AI response or calculate
-            const accuracyMatch = response.match(/(\d+)%/);
-            const accuracy = accuracyMatch
-                ? parseInt(accuracyMatch[1])
-                : this.calculateSimpleAccuracy(transcription, expectedWord);
 
             return {
-                accuracy,
+                accuracy: calculatedAccuracy,
                 transcription,
                 expectedWord,
                 feedback: response,

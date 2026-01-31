@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -93,13 +94,25 @@ const OverallTestScreen = () => {
       const data = await recordAudio(word, [letter]);
 
       console.log('✅ Recording complete:', data);
-      setAttempts((prev) => [...prev, data]);
-      setFeedback(data.feedback);
+      
+      // Check if there was a transcription error
+      if (data.error) {
+        setFeedback(data.feedback);
+        // Don't add to attempts if transcription failed
+        Alert.alert(
+          'Recording Issue',
+          'We couldn\'t process your audio. Please try again.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        setAttempts((prev) => [...prev, data]);
+        setFeedback(data.feedback);
+      }
     } catch (error) {
       console.error('❌ Recording error:', error);
       Alert.alert(
         'Recording Failed',
-        `Could not process your recording: ${error.message}. Please check microphone permissions and try again.`,
+        `Could not process your recording: ${error.message}`,
         [{ text: 'OK' }]
       );
     } finally {

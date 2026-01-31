@@ -23,9 +23,11 @@ export default function Learning() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [todaysCourse, setTodaysCourse] = useState(null);
+  const [articles, setArticles] = useState([]);
 
   useEffect(() => {
     fetchCourses();
+    fetchArticles();
   }, []);
 
   const fetchCourses = async () => {
@@ -60,6 +62,37 @@ export default function Learning() {
       setError(err.message);
       setLoading(false);
     }
+  };
+
+  const fetchArticles = () => {
+    // Sample articles data - replace with actual API call if needed
+    const sampleArticles = [
+      {
+        title: "Understanding Speech Therapy: A Comprehensive Guide",
+        description: "Learn about the fundamentals of speech therapy and how it can help improve communication skills.",
+        url: "https://example.com/article1",
+        urlToImage: "https://via.placeholder.com/400x200",
+        publishedAt: new Date().toISOString(),
+        source: { name: "NeuroAI Blog" }
+      },
+      {
+        title: "The Science Behind Phoneme Recognition",
+        description: "Explore the neuroscience and technology behind phoneme detection and speech recognition.",
+        url: "https://example.com/article2",
+        urlToImage: "https://via.placeholder.com/400x200",
+        publishedAt: new Date(Date.now() - 86400000).toISOString(),
+        source: { name: "Science Daily" }
+      },
+      {
+        title: "5 Tips for Improving Your Speech Clarity",
+        description: "Practical exercises and techniques to enhance your speech clarity and pronunciation.",
+        url: "https://example.com/article3",
+        urlToImage: "https://via.placeholder.com/400x200",
+        publishedAt: new Date(Date.now() - 172800000).toISOString(),
+        source: { name: "Health & Wellness" }
+      }
+    ];
+    setArticles(sampleArticles);
   };
 
   const overalltest = () => {
@@ -214,12 +247,15 @@ export default function Learning() {
               Featured Articles
             </div>
             <div className="flex flex-col pt-0 pl-0 mt-10 gap-4 h-[470px] overflow-y-scroll custom-scrollbar p-4">
-              <Articlescomponent />
-              <Articlescomponent />
-              <Articlescomponent />
-              <Articlescomponent />
-              <Articlescomponent />
-              <Articlescomponent />
+              {articles.length > 0 ? (
+                articles.map((article, index) => (
+                  <Articlescomponent key={index} article={article} />
+                ))
+              ) : (
+                <div className={`text-center py-10 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  No articles available
+                </div>
+              )}
             </div>
           </div>
         </div>

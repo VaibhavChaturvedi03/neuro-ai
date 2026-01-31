@@ -3,12 +3,17 @@ import React, { useState } from "react";
 export default function Articlescomponent({ article }) {
   const [imageError, setImageError] = useState(false);
   
+  // Return null if article is undefined
+  if (!article) return null;
+  
   // Support both News API (publishedAt) and MediaStack (published_at)
-  const publishedDate = new Date(article.publishedAt || article.published_at).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+  const publishedDate = (article.publishedAt || article.published_at) 
+    ? new Date(article.publishedAt || article.published_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    : 'Unknown Date';
 
   const handleArticleClick = () => {
     window.open(article.url, '_blank', 'noopener,noreferrer');

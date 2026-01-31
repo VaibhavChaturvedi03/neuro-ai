@@ -340,14 +340,12 @@ const Coursetest = () => {
         </div>
       )}
 
-      {progress && (
-        <div className="mt-10 text-center">
-          <div className="text-lg font-semibold mb-2">Overall Course Progress</div>
-          <div className="text-md">
-            Completed: {progress.totalLessonsCompleted} / {course.lessons.length} lessons ({progress.overallProgress}%)
-          </div>
+      <div className="mt-10 text-center">
+        <div className="text-lg font-semibold mb-2">Overall Course Progress</div>
+        <div className="text-md">
+          Completed: {progress?.lessonsProgress?.filter(lp => lp.isCompleted).length || 0} / {course.lessons.length} lessons ({Math.round((progress?.lessonsProgress?.filter(lp => lp.isCompleted).length || 0) / course.lessons.length * 100)}%)
         </div>
-      )}
+      </div>
     </div>
   );
 };

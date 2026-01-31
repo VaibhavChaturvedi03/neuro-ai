@@ -109,33 +109,61 @@ REMEDY = {
 
 
 def check(word_given, word_recieved, check_for):
-        k=0
-        while k<len(word_recieved) and word_recieved[k]==' ':
-             k+=1
-        word_recieved=word_recieved[k:]
-        for i in range(k,len(word_recieved)):
-              if word_recieved[i]=='.' or word_recieved[i]=='\n' or word_recieved[i]==' ' or word_recieved[i]=='' or word_recieved[i]=='!':
-                    word_recieved=word_recieved[0:i]
-                    break
-        print(word_given,word_recieved,check_for)
-        if word_recieved[0:len(SOUND_REFERENCE[check_for])] == SOUND_REFERENCE[check_for]:
-            #print(word_recieved[len(SOUND_REFERENCE[check_for]):],word_given[len(check_for):])
-            if word_recieved[len(SOUND_REFERENCE[check_for]):]==word_given[len(check_for):]:
-
-                 return 20
-            else:
-                 print(word_recieved,word_given)
-                 return 0
-
-            #return [0,REMEDY[check_for]]
-        elif word_recieved[0:len(check_for)]==word_given[0:len(check_for)]:
-            if word_recieved[len(check_for):]==word_given[len(check_for):]:
-                 return 100
-            else:
-                 return 75
-        else:
-            # print('dasd')
-            return 0
+    """
+    Calculate accuracy percentage based on how well the received word matches the given word.
+    Uses a simple word matching algorithm with fuzzy matching.
+    """
+    # Clean up the received word
+    k = 0
+    while k < len(word_recieved) and word_recieved[k] == ' ':
+        k += 1
+    word_recieved = word_recieved[k:]
+    
+    # Remove punctuation and extra spaces
+    for i in range(len(word_recieved)):
+        if word_recieved[i] in ['.', '\n', ' ', '!', '?', ',']:
+            word_recieved = word_recieved[0:i]
+            break
+    
+    word_recieved = word_recieved.strip().lower()
+    word_given = word_given.strip().lower()
+    
+    print(f"Comparing - Given: '{word_given}', Received: '{word_recieved}', Letter: '{check_for}'")
+    
+    # Exact match = 100%
+    if word_recieved == word_given:
+        return 100
+    
+    # Calculate similarity using Levenshtein-like approach
+    # If words are completely different, return 0
+    if len(word_recieved) == 0 or len(word_given) == 0:
+        return 0
+    
+    # Check if it's a partial match (contains the word)
+    if word_given in word_recieved or word_recieved in word_given:
+        # Calculate based on length difference
+        len_diff = abs(len(word_given) - len(word_recieved))
+        similarity = max(0, 100 - (len_diff * 10))
+        return min(90, similarity)  # Cap at 90% for partial matches
+    
+    # Calculate character-by-character similarity
+    matches = 0
+    max_len = max(len(word_given), len(word_recieved))
+    min_len = min(len(word_given), len(word_recieved))
+    
+    for i in range(min_len):
+        if word_given[i] == word_recieved[i]:
+            matches += 1
+    
+    # Penalize length difference
+    len_penalty = abs(len(word_given) - len(word_recieved)) * 5
+    similarity = (matches / max_len * 100) - len_penalty
+    
+    # If similarity is too low (less than 30%), likely wrong word
+    if similarity < 30:
+        return 0
+    
+    return max(0, min(95, int(similarity)))  # Cap at 95% for fuzzy matches
 
 
 # import os

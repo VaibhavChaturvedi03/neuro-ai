@@ -12,6 +12,7 @@
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.1.2",
     "@heroicons/react": "^2.1.4",
     "@material-tailwind/react": "^2.1.9",

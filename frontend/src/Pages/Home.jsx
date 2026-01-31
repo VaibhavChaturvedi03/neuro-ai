@@ -488,7 +488,9 @@ export default function Home() {
                 section.
               </div>
               <div className="flex justify-center items-center w-full lg:justify-start">
-                <button className="p-4 bg-[#89D85D] rounded-md font-spacegroteskmedium hover:bg-opacity-90">
+                <button className="p-4 bg-[#89D85D] rounded-md font-spacegroteskmedium hover:bg-opacity-90"
+                  onClick={() => navigate('/articles')}
+                >
                   Read Articles →
                 </button>
               </div>

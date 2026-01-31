@@ -17,6 +17,15 @@ export const ThemeProvider = ({ children }) => {
     return savedTheme === "dark";
   });
 
+  useEffect(() => {
+    // Apply dark mode class to document element
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   const toggleTheme = (newDarkMode) => {
     // If newDarkMode is provided, use it; otherwise toggle
     const nextMode = newDarkMode !== undefined ? newDarkMode : !darkMode;

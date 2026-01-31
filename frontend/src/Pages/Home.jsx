@@ -301,12 +301,10 @@ export default function Home() {
             </div>
             <div className="lg:ml-20 ml-0 flex flex-col gap-8 items-center justify-center lg:mt-0 md:mt-0 mt-10">
               <div className="lg:text-4xl md:text-3xl text-xl p-1 lg:p-0 lg:text-start text-center font-spacegrotesksemibold dark:text-white">
-                Real-Time Speech Detection and Weekly Test Analysis
+                Personalized Adaptive learning
               </div>
               <div className="font-spacegroteskregular lg:text-xl md:text-xl text-sm lg:text-start text-center p-4 lg:p-0 dark:text-gray-300">
-                Unlock the potential of your voice through cutting-edge
-                technology. Our platform not only hears your words but guides
-                you towards eloquence with precision.
+                NeuroAi adjusts difficulty and content based on each child’s performance, creating a custom learning path instead of a fixed curriculum.
               </div>
             </div>
           </div>

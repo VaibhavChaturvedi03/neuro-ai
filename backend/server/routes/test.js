@@ -6,7 +6,8 @@ import {
   resetTest,
   getAllUserTests,
   getUserStatistics,
-  recordAndAnalyze
+  recordAndAnalyze,
+  getCourseRecommendations
 } from '../controllers/testController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -22,5 +23,6 @@ router.post('/attempt', protect, saveTestAttempt);
 router.delete('/reset/:letter', protect, resetTest);
 router.get('/all', protect, getAllUserTests);
 router.get('/statistics', protect, getUserStatistics);
+router.get('/recommendations', protect, getCourseRecommendations);
 
 export default router;
